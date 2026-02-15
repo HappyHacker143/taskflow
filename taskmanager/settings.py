@@ -92,8 +92,10 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 # Security for production
+# Security for production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # Railway уже обрабатывает SSL, не нужен редирект
+    # SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
