@@ -90,6 +90,9 @@ LOGOUT_REDIRECT_URL = '/login/'
 
 # Security for production
 if not DEBUG:
-    SECURE_SSL_REDIRECT = False  # ВАЖНО для Railway
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    X_FRAME_OPTIONS = 'DENY'
+
