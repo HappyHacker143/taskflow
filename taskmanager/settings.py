@@ -10,6 +10,12 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-CHANGE-THIS-IN-PRODUC
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
+# CSRF Trusted Origins для Railway
+CSRF_TRUSTED_ORIGINS = [
+    'https://web-production-e36b7.up.railway.app',
+    'https://*.railway.app',
+]
+
 # Application
 INSTALLED_APPS = [
     'django.contrib.admin',
