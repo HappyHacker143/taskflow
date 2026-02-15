@@ -55,7 +55,7 @@ WSGI_APPLICATION = 'taskmanager.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='postgresql://postgres:password@localhost:5432/taskflow'),
+        default=config('DATABASE_URL'),  # теперь берёт Supabase из .env
         conn_max_age=600,
         ssl_require=True
     )
