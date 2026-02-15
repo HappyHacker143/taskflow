@@ -1,0 +1,85 @@
+{% extends "tasks/base.html" %}
+{% block title %}Сотрудники — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Сотрудники</h1>
+        <p class="page-subtitle">Управление пользователями системы</p>
+    </div>
+    <a href="{% url 'user_create' %}" class="btn-primary">+ Новый сотрудник</a>
+</div>
+
+<!-- FILTER -->
+<div class="filter-bar">
+    <form method="get" class="filter-form">
+        <input type="text" name="search" value="{{ search }}" class="form-input search-input" placeholder="Поиск сотрудников...">
+        <select name="department" class="form-input filter-select" onchange="this.form.submit()">
+            <option value="">Все отделы</option>
+            {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if dept_filter == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-ghost btn-sm">Найти</button>
+    </form>
+</div>
+
+<!-- USERS TABLE -->
+<div class="table-card">
+    {% if users %}
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Сотрудник</th>
+                <th>Отдел</th>
+                <th>Должность</th>
+                <th>Роль</th>
+                <th>Email</th>
+                <th>Статус</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>
+                    <div class="user-cell">
+                        <div class="member-avatar member-avatar-sm" style="background: {{ user.profile.avatar_color }}">
+                            {{ user.profile.initials }}
+                        </div>
+                        <span class="user-cell-name">{{ user.profile.display_name }}</span>
+                    </div>
+                </td>
+                <td>{{ user.profile.department|default:"—" }}</td>
+                <td>{{ user.profile.position|default:"—" }}</td>
+                <td>
+                    <span class="role-badge role-{{ user.profile.role }}">{{ user.profile.get_role_display }}</span>
+                </td>
+                <td class="text-muted">{{ user.email }}</td>
+                <td>
+                    {% if user.is_active %}
+                        <span class="status-badge status-badge-done">Активен</span>
+                    {% else %}
+                        <span class="status-badge status-badge-todo">Неактивен</span>
+                    {% endif %}
+                </td>
+                <td class="table-actions">
+                    <a href="{% url 'user_edit' user.pk %}" class="btn-ghost btn-xs">✎</a>
+                    {% if user != request.user %}
+                        <a href="{% url 'user_delete' user.pk %}" class="btn-ghost btn-xs btn-danger">✕</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state-full">
+        <div class="empty-icon">👥</div>
+        <h2>Сотрудники не найдены</h2>
+        <p>Измените параметры поиска или добавьте нового сотрудника</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

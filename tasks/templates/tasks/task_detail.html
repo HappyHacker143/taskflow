@@ -1,0 +1,129 @@
+{% extends "tasks/base.html" %}
+{% block title %}{{ task.title }} — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{% url 'project_list' %}">Проекты</a> /
+        <a href="{% url 'project_detail' task.project.pk %}">{{ task.project.name }}</a> /
+        <span>{{ task.title }}</span>
+    </div>
+</div>
+
+<div class="task-detail-layout">
+    <!-- MAIN INFO -->
+    <div class="task-detail-main">
+        <div class="task-detail-header">
+            <div class="task-detail-title-row">
+                <span class="task-status-dot-lg status-{{ task.status }}"></span>
+                <h1 class="task-detail-title">{{ task.title }}</h1>
+            </div>
+            {% if task.is_overdue %}
+                <span class="badge badge-overdue">Просрочена</span>
+            {% endif %}
+        </div>
+
+        {% if task.description %}
+        <div class="task-detail-description">
+            <p>{{ task.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if task.tag_list %}
+        <div class="task-detail-tags">
+            {% for tag in task.tag_list %}
+                <span class="tag tag-lg">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- COMMENTS -->
+        <div class="comments-section">
+            <h3 class="comments-title">Комментарии ({{ comments|length }})</h3>
+            {% for comment in comments %}
+            <div class="comment">
+                <div class="comment-avatar" style="background: {{ comment.author.profile.avatar_color }}">{{ comment.author.profile.initials }}</div>
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <strong class="comment-author">{{ comment.author.profile.display_name }}</strong>
+                        <span class="comment-date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <p class="comment-text">{{ comment.text }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p class="comments-empty">Пока комментариев нет.</p>
+            {% endfor %}
+
+            <!-- ADD COMMENT -->
+            <form method="post" action="{% url 'add_comment' task.pk %}" class="comment-form">
+                {% csrf_token %}
+                {{ comment_form.text }}
+                <button type="submit" class="btn-primary btn-sm">Добавить комментарий</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR INFO -->
+    <aside class="task-detail-sidebar">
+        <div class="task-detail-meta-card">
+            <h4>Детали задачи</h4>
+
+            <div class="meta-item">
+                <span class="meta-label">Статус</span>
+                <span class="meta-value">
+                    <span class="status-badge status-badge-{{ task.status }}">{{ task.get_status_label }}</span>
+                </span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Приоритет</span>
+                <span class="meta-value">
+                    <span class="priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
+                </span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Проект</span>
+                <span class="meta-value"><a href="{% url 'project_detail' task.project.pk %}" class="meta-link">{{ task.project.name }}</a></span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Исполнитель</span>
+                <span class="meta-value">
+                    {% if task.assignee %}
+                        <div class="meta-assignee">
+                            <div class="member-avatar member-avatar-xs" style="background: {{ task.assignee.profile.avatar_color }}">{{ task.assignee.profile.initials }}</div>
+                            {{ task.assignee.profile.display_name }}
+                        </div>
+                    {% else %}
+                        <em class="text-muted">Не назначено</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Создатель</span>
+                <span class="meta-value">{{ task.created_by.profile.display_name }}</span>
+            </div>
+            {% if task.due_date %}
+            <div class="meta-item">
+                <span class="meta-label">Дата окончания</span>
+                <span class="meta-value {% if task.is_overdue %}text-danger{% endif %}">{{ task.due_date|date:"d.m.Y" }}</span>
+            </div>
+            {% endif %}
+            <div class="meta-item">
+                <span class="meta-label">Создано</span>
+                <span class="meta-value text-muted">{{ task.created_at|date:"d.m.Y H:i" }}</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Обновлено</span>
+                <span class="meta-value text-muted">{{ task.updated_at|date:"d.m.Y H:i" }}</span>
+            </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="task-detail-actions">
+            <a href="{% url 'task_edit' task.pk %}" class="btn-primary btn-full-card">✎ Редактировать</a>
+            <a href="{% url 'task_delete' task.pk %}" class="btn-danger btn-full-card">✕ Удалить</a>
+        </div>
+    </aside>
+</div>
+
+{% endblock %}

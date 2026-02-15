@@ -1,0 +1,20 @@
+{% extends "tasks/base.html" %}
+{% block title %}Удалить задачу — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="form-page">
+    <div class="form-card confirm-card">
+        <div class="confirm-icon">⚠</div>
+        <h2>Удалить задачу?</h2>
+        <p>Вы уверены, что хотите удалить задачу <strong>"{{ task.title }}"</strong>? Это действие нельзя отменить.</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions confirm-actions">
+                <button type="submit" class="btn-danger">Удалить</button>
+                <a href="{% url 'task_detail' task.pk %}" class="btn-ghost">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

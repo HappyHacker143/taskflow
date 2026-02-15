@@ -1,0 +1,59 @@
+{% extends "tasks/base.html" %}
+{% block title %}Проекты — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Проекты</h1>
+        <p class="page-subtitle">Все ваши проекты</p>
+    </div>
+    <a href="{% url 'project_create' %}" class="btn-primary">+ Новый проект</a>
+</div>
+
+{% if projects %}
+<div class="projects-grid">
+    {% for project in projects %}
+    <div class="project-card-full">
+        <div class="project-card-full-header" style="border-top: 3px solid {{ project.color }}">
+            <div class="project-card-top">
+                <div class="project-dot-lg" style="background-color: {{ project.color }}"></div>
+                <div class="project-card-actions">
+                    <a href="{% url 'project_edit' project.pk %}" class="btn-ghost btn-xs">✎</a>
+                    <a href="{% url 'project_delete' project.pk %}" class="btn-ghost btn-xs btn-danger">✕</a>
+                </div>
+            </div>
+            <h3><a href="{% url 'project_detail' project.pk %}" class="project-link">{{ project.name }}</a></h3>
+            <p class="project-description">{{ project.description|truncatewords:20 }}</p>
+        </div>
+        <div class="project-card-full-body">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ project.progress_percent }}%; background-color: {{ project.color }}"></div>
+            </div>
+            <div class="project-stats-row">
+                <span>{{ project.progress_percent }}% завершено</span>
+                <span>{{ project.completed_task_count }} / {{ project.task_count }} задач</span>
+            </div>
+            <div class="project-members">
+                {% for member in project.members.all %}
+                    <div class="member-avatar member-avatar-sm" style="background: {{ member.profile.avatar_color }}" title="{{ member.first_name }} {{ member.last_name }} - {{ member.profile.position }}">
+                        {{ member.profile.initials }}
+                    </div>
+                {% empty %}
+                    <span class="text-muted" style="font-size: 12px;">Нет участников</span>
+                {% endfor %}
+            </div>
+        </div>
+        <a href="{% url 'project_detail' project.pk %}" class="btn-primary btn-sm btn-full-card">Открыть →</a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state-full">
+    <div class="empty-icon">◇</div>
+    <h2>Нет проектов</h2>
+    <p>Создайте первый проект, чтобы начать работу.</p>
+    <a href="{% url 'project_create' %}" class="btn-primary">Создать проект</a>
+</div>
+{% endif %}
+
+{% endblock %}

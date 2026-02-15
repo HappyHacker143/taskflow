@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TaskFlow — Управление задачами{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if messages %}
+        <div class="toast-container" id="toastContainer">
+            {% for message in messages %}
+                <div class="toast toast-{{ message.tags }}">
+                    <span class="toast-icon">{% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✕{% else %}ℹ{% endif %}</span>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="auth-layout">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

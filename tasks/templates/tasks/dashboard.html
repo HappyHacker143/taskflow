@@ -1,0 +1,104 @@
+{% extends "tasks/base.html" %}
+{% block title %}Дашборд — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Дашборд</h1>
+        <p class="page-subtitle">Обзор вашей деятельности</p>
+    </div>
+    <a href="{% url 'task_create' %}" class="btn-primary">+ Новая задача</a>
+</div>
+
+<!-- STATS CARDS -->
+<div class="stats-grid">
+    <div class="stat-card stat-total">
+        <div class="stat-icon">◎</div>
+        <div class="stat-value">{{ stats.total }}</div>
+        <div class="stat-label">Всего задач</div>
+    </div>
+    <div class="stat-card stat-progress">
+        <div class="stat-icon">◐</div>
+        <div class="stat-value">{{ stats.in_progress }}</div>
+        <div class="stat-label">В работе</div>
+    </div>
+    <div class="stat-card stat-done">
+        <div class="stat-icon">✓</div>
+        <div class="stat-value">{{ stats.done }}</div>
+        <div class="stat-label">Завершены</div>
+    </div>
+    <div class="stat-card stat-overdue">
+        <div class="stat-icon">!</div>
+        <div class="stat-value">{{ stats.overdue }}</div>
+        <div class="stat-label">Просроченные</div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- MY PROJECTS -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>Проекты</h2>
+            <a href="{% url 'project_list' %}" class="btn-ghost btn-sm">Все проекты →</a>
+        </div>
+        {% if projects %}
+        <div class="project-cards">
+            {% for project in projects %}
+            <a href="{% url 'project_detail' project.pk %}" class="project-card">
+                <div class="project-card-header">
+                    <div class="project-dot" style="background-color: {{ project.color }}"></div>
+                    <span class="project-name">{{ project.name }}</span>
+                </div>
+                <p class="project-desc">{{ project.description|truncatewords:12 }}</p>
+                <div class="project-progress-wrap">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ project.progress_percent }}%; background-color: {{ project.color }}"></div>
+                    </div>
+                    <span class="progress-text">{{ project.progress_percent }}% завершено</span>
+                </div>
+                <div class="project-meta">
+                    <span>{{ project.task_count }} задач</span>
+                    <span>{{ project.completed_task_count }} сделано</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>У вас пока нет проектов.</p>
+            <a href="{% url 'project_create' %}" class="btn-primary btn-sm">Создать проект</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- MY TASKS -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <h2>Мои задачи</h2>
+            <a href="{% url 'my_tasks' %}" class="btn-ghost btn-sm">Все задачи →</a>
+        </div>
+        {% if my_tasks %}
+        <div class="task-list">
+            {% for task in my_tasks %}
+            <a href="{% url 'task_detail' task.pk %}" class="task-row">
+                <span class="task-status-dot status-{{ task.status }}"></span>
+                <div class="task-info">
+                    <span class="task-title">{{ task.title }}</span>
+                    <span class="task-project-name">{{ task.project.name }}</span>
+                </div>
+                <span class="task-priority priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
+                {% if task.is_overdue %}
+                    <span class="task-overdue-badge">Просрочена</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>Нет назначенных задач.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

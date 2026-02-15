@@ -1,0 +1,20 @@
+{% extends "tasks/base.html" %}
+{% block title %}Удалить проект — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="form-page">
+    <div class="form-card confirm-card">
+        <div class="confirm-icon">⚠</div>
+        <h2>Удалить проект?</h2>
+        <p>Вы уверены, что хотите удалить проект <strong>"{{ project.name }}"</strong> и все связанные задачи? Это действие нельзя отменить.</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions confirm-actions">
+                <button type="submit" class="btn-danger">Удалить</button>
+                <a href="{% url 'project_detail' project.pk %}" class="btn-ghost">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

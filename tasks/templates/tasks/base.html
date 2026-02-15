@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TaskFlow — Управление задачами{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if messages %}
+        <div class="toast-container" id="toastContainer">
+            {% for message in messages %}
+                <div class="toast toast-{{ message.tags }}">
+                    <span class="toast-icon">{% if message.tags == 'success' %}✓{% elif message.tags == 'error' %}✕{% else %}ℹ{% endif %}</span>
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <a href="{% url 'dashboard' %}" class="brand-link">
+                    <div class="brand-icon">TF</div>
+                    <span class="brand-text">TaskFlow</span>
+                </a>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+                    <span class="nav-icon">⬡</span> Дашборд
+                </a>
+                <a href="{% url 'project_list' %}" class="nav-link {% if 'projects' in request.path %}active{% endif %}">
+                    <span class="nav-icon">◇</span> Проекты
+                </a>
+                <a href="{% url 'my_tasks' %}" class="nav-link {% if request.path == '/my-tasks/' %}active{% endif %}">
+                    <span class="nav-icon">◎</span> Мои задачи
+                </a>
+                {% if user.is_superuser or user.profile.role == 'admin' %}
+                <a href="{% url 'user_list' %}" class="nav-link {% if 'users' in request.path %}active{% endif %}">
+                    <span class="nav-icon">👥</span> Сотрудники
+                </a>
+                {% endif %}
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" style="background: {{ user.profile.avatar_color }}">{{ user.profile.initials }}</div>
+                    <div class="user-details">
+                        <span class="user-name">{{ user.profile.display_name }}</span>
+                        <span class="user-email">{{ user.profile.position|default:"Сотрудник" }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'logout' %}" class="logout-btn">Выход</a>
+            </div>
+        </aside>
+        <main class="main-content">
+            <div class="content-wrapper">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

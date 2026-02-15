@@ -1,0 +1,83 @@
+{% extends "tasks/base.html" %}
+{% block title %}Мои задачи — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Мои задачи</h1>
+        <p class="page-subtitle">Задачи, назначенные вам</p>
+    </div>
+    <a href="{% url 'task_create' %}" class="btn-primary">+ Новая задача</a>
+</div>
+
+<!-- FILTER -->
+<div class="filter-bar">
+    <form method="get" class="filter-form">
+        <input type="text" name="search" value="{{ search }}" class="form-input search-input" placeholder="Поиск...">
+        <select name="status" class="form-input filter-select" onchange="this.form.submit()">
+            <option value="" {% if not status_filter %}selected{% endif %}>Все статусы</option>
+            <option value="todo" {% if status_filter == 'todo' %}selected{% endif %}>Не начата</option>
+            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>В работе</option>
+            <option value="review" {% if status_filter == 'review' %}selected{% endif %}>На проверке</option>
+            <option value="done" {% if status_filter == 'done' %}selected{% endif %}>Завершена</option>
+        </select>
+        <button type="submit" class="btn-ghost btn-sm">Найти</button>
+    </form>
+</div>
+
+<!-- TASKS TABLE -->
+<div class="table-card">
+    {% if tasks %}
+    <table class="tasks-table">
+        <thead>
+            <tr>
+                <th>Статус</th>
+                <th class="col-title">Задача</th>
+                <th>Проект</th>
+                <th>Приоритет</th>
+                <th>Дата</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr class="{% if task.is_overdue %}row-overdue{% endif %}">
+                <td><span class="status-badge status-badge-{{ task.status }}">{{ task.get_status_label }}</span></td>
+                <td class="col-title">
+                    <a href="{% url 'task_detail' task.pk %}" class="task-link">{{ task.title }}</a>
+                    {% if task.tag_list %}
+                        <div class="table-tags">
+                            {% for tag in task.tag_list %}<span class="tag tag-sm">{{ tag }}</span>{% endfor %}
+                        </div>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'project_detail' task.project.pk %}" class="meta-link">{{ task.project.name }}</a>
+                </td>
+                <td><span class="priority-{{ task.priority }}">{{ task.get_priority_label }}</span></td>
+                <td>
+                    {% if task.due_date %}
+                        <span class="{% if task.is_overdue %}text-danger{% endif %}">{{ task.due_date|date:"d.m.Y" }}</span>
+                        {% if task.is_overdue %}<span class="badge badge-overdue">!</span>{% endif %}
+                    {% else %}
+                        <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="table-actions">
+                    <a href="{% url 'task_edit' task.pk %}" class="btn-ghost btn-xs">✎</a>
+                    <a href="{% url 'task_delete' task.pk %}" class="btn-ghost btn-xs btn-danger">✕</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state-full">
+        <div class="empty-icon">◎</div>
+        <h2>Нет задач</h2>
+        <p>У вас пока нет назначенных задач.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

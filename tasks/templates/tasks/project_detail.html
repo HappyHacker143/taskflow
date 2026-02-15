@@ -1,0 +1,93 @@
+{% extends "tasks/base.html" %}
+{% load custom_filters %}
+{% block title %}{{ project.name }} — TaskFlow{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <div class="breadcrumb">
+            <a href="{% url 'project_list' %}">Проекты</a> /
+            <span style="color: {{ project.color }}">{{ project.name }}</span>
+        </div>
+        <h1 class="page-title" style="color: {{ project.color }}">{{ project.name }}</h1>
+        <p class="page-subtitle">{{ project.description|truncatewords:25 }}</p>
+    </div>
+    <div class="page-header-actions">
+        <a href="{% url 'task_create_in_project' project.pk %}" class="btn-primary">+ Задача</a>
+        <a href="{% url 'project_edit' project.pk %}" class="btn-ghost">Настройки</a>
+    </div>
+</div>
+
+<!-- Project progress bar -->
+<div class="project-progress-full">
+    <div class="progress-bar-lg">
+        <div class="progress-fill" style="width: {{ project.progress_percent }}%; background-color: {{ project.color }}"></div>
+    </div>
+    <span class="progress-label">{{ project.progress_percent }}% ({{ project.completed_task_count }} из {{ project.task_count }})</span>
+</div>
+
+<!-- SEARCH & FILTER -->
+<div class="filter-bar">
+    <form method="get" class="filter-form">
+        <input type="text" name="search" value="{{ search }}" class="form-input search-input" placeholder="Поиск задач...">
+        <select name="status" class="form-input filter-select" onchange="this.form.submit()">
+            <option value="" {% if not status_filter %}selected{% endif %}>Все статусы</option>
+            <option value="todo" {% if status_filter == 'todo' %}selected{% endif %}>Не начата</option>
+            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>В работе</option>
+            <option value="review" {% if status_filter == 'review' %}selected{% endif %}>На проверке</option>
+            <option value="done" {% if status_filter == 'done' %}selected{% endif %}>Завершена</option>
+        </select>
+        <button type="submit" class="btn-ghost btn-sm">Найти</button>
+    </form>
+</div>
+
+<!-- KANBAN BOARD -->
+<div class="kanban-board">
+    {% for status, label in kanban_columns %}
+    <div class="kanban-column">
+        <div class="kanban-header status-header-{{ status }}">
+            <span class="kanban-title">{{ label }}</span>
+            <span class="kanban-count">{{ kanban_dict|get_item:status|length }}</span>
+        </div>
+        <div class="kanban-cards">
+            {% for task in kanban_dict|get_item:status %}
+            <a href="{% url 'task_detail' task.pk %}" class="kanban-card">
+                {% if task.is_overdue %}
+                    <div class="kanban-card-overdue"></div>
+                {% endif %}
+                <div class="kanban-card-header">
+                    <span class="kanban-card-priority priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
+                    {% if task.due_date %}
+                        <span class="kanban-card-date {% if task.is_overdue %}overdue-date{% endif %}">
+                            {{ task.due_date|date:"d.m.Y" }}
+                        </span>
+                    {% endif %}
+                </div>
+                <h4 class="kanban-card-title">{{ task.title }}</h4>
+                {% if task.tag_list %}
+                <div class="kanban-card-tags">
+                    {% for tag in task.tag_list %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="kanban-card-footer">
+                    {% if task.assignee %}
+                        <div class="member-avatar member-avatar-xs" style="background: {{ task.assignee.profile.avatar_color }}" title="{{ task.assignee.profile.display_name }} - {{ task.assignee.profile.position }}">
+                            {{ task.assignee.profile.initials }}
+                        </div>
+                    {% else %}
+                        <span class="kanban-unassigned">Не назначено</span>
+                    {% endif %}
+                    <span class="kanban-card-comments">💬 {{ task.comments.count }}</span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="kanban-empty">Задач нет</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

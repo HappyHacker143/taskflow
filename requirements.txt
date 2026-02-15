@@ -1,0 +1,21 @@
+Django>=4.2,<5.1
+psycopg2-binary>=2.9.9
+gunicorn>=21.2.0
+whitenoise>=6.6.0
+python-decouple>=3.8
+dj-database-url>=2.1.0
+```
+
+#### 4. Создайте `.gitignore`:
+```
+*.pyc
+__pycache__/
+db.sqlite3
+.env
+*.log
+staticfiles/
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
