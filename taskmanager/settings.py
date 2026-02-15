@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-CHANGE-THIS-IN-PRODUCTION-abc123xyz')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,web-production-e36b7.up.railway.app').split(',')
 
 # Application
 INSTALLED_APPS = [
@@ -55,7 +55,10 @@ WSGI_APPLICATION = 'taskmanager.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=config('DATABASE_URL', default='postgresql://postgres:password@localhost:5432/taskflow'),
+        default=config(
+            'DATABASE_URL',
+            default='postgresql://postgres:password@localhost:5432/taskflow'
+        ),
         conn_max_age=600,
         ssl_require=True
     )
@@ -96,3 +99,8 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = 'DENY'
 
+    # CSRF trusted origins
+    CSRF_TRUSTED_ORIGINS = [
+        'https://web-production-e36b7.up.railway.app',  # ваш домен
+        # 'https://*.railway.app',  # если нужны поддомены
+    ]
