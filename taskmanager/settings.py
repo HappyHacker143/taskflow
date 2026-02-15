@@ -98,6 +98,8 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     X_FRAME_OPTIONS = 'DENY'
+    ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
+
 
     # CSRF trusted origins
     CSRF_TRUSTED_ORIGINS = [
