@@ -504,31 +504,60 @@ input[type="color"].form-input { padding: 6px 8px; height: 40px; width: 60px; cu
 .comment-form { margin-top: 16px; }
 .comment-form textarea { margin-bottom: 8px; }
 
-/* ─── TABLE ──────────────────────────────────────────────── */
-.table-card {
+/* ─── TABLES ─────────────────────────────────────────────── */
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
     background: var(--clr-surface);
-    border: 1px solid var(--clr-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius);
     overflow: hidden;
 }
-.tasks-table { width: 100%; border-collapse: collapse; }
-.tasks-table th {
-    text-align: left; padding: 12px 16px;
-    font-size: 12px; font-weight: 600;
-    color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--clr-border);
+
+.task-table thead {
     background: var(--clr-bg);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
-.tasks-table td { padding: 12px 16px; border-bottom: 1px solid var(--clr-border); font-size: 14px; }
-.tasks-table tr:last-child td { border-bottom: none; }
-.tasks-table tr:hover td { background: var(--clr-surface-hover); }
-.tasks-table .col-title { max-width: 280px; }
 
-.task-link { color: var(--clr-text); font-weight: 500; }
-.task-link:hover { color: var(--clr-accent); }
+.task-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--clr-text-muted);
+    border-bottom: 1px solid var(--clr-border);
+    white-space: nowrap;
+    vertical-align: middle; /* Добавьте это */
+}
 
-.table-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.table-actions { display: flex; gap: 4px; }
+.task-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--clr-border);
+    vertical-align: middle; /* Добавьте это */
+}
+
+.task-table tbody tr {
+    transition: background var(--transition);
+}
+
+.task-table tbody tr:hover {
+    background: var(--clr-surface-hover);
+}
+
+.task-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Фиксированная ширина для колонки действий */
+.task-table th:last-child,
+.task-table td:last-child {
+    width: 120px;
+    text-align: right;
+    white-space: nowrap;
+}
 
 .row-overdue td { background: rgba(248,113,113,0.04); }
 
