@@ -12,6 +12,8 @@
     padding: 24px;
     border-radius: var(--radius-lg);
     border: 1px solid var(--clr-border);
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
 .calendar-title {
@@ -26,6 +28,7 @@
 .calendar-nav {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .calendar-nav-btn {
@@ -138,6 +141,7 @@
     text-overflow: ellipsis;
     border-left: 3px solid;
     transition: var(--transition);
+    text-decoration: none;
 }
 
 .calendar-task:hover {
@@ -180,6 +184,7 @@
     padding: 20px;
     background: var(--clr-bg);
     border-radius: var(--radius);
+    flex-wrap: wrap;
 }
 
 .legend-item {
@@ -194,6 +199,27 @@
     width: 16px;
     height: 16px;
     border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .calendar-day {
+        min-height: 80px;
+        padding: 8px;
+    }
+
+    .calendar-day-number {
+        font-size: 14px;
+    }
+
+    .calendar-task {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+
+    .calendar-weekday {
+        padding: 8px 4px;
+        font-size: 10px;
+    }
 }
 </style>
 {% endblock %}
@@ -224,31 +250,27 @@
         <div class="calendar-weekday">Сб</div>
         <div class="calendar-weekday">Вс</div>
     </div>
-    
+
     <div class="calendar-days">
         {% for week in calendar %}
             {% for day in week %}
                 {% if day == 0 %}
                     <div class="calendar-day empty"></div>
                 {% else %}
-                    {% with date_key=year|stringformat:"s"|add:"-"|add:month|stringformat:"02d"|add:"-"|add:day|stringformat:"02d" %}
                     <div class="calendar-day {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
                         <div class="calendar-day-number">{{ day }}</div>
                         <div class="calendar-tasks">
-                            {% for task in tasks_by_date|default_if_none:dict %}
-                                {% if date_key in tasks_by_date %}
-                                    {% for task in tasks_by_date|get_item:date_key %}
-                                        <a href="{% url 'task_detail' task.pk %}" 
-                                           class="calendar-task status-{{ task.status }} priority-{{ task.priority }}"
-                                           title="{{ task.title }} - {{ task.project.name }}">
-                                            {{ task.title|truncatechars:20 }}
-                                        </a>
-                                    {% endfor %}
+                            {% for task in user_tasks %}
+                                {% if task.due_date.year == year and task.due_date.month == month and task.due_date.day == day %}
+                                    <a href="{% url 'task_detail' task.pk %}"
+                                       class="calendar-task status-{{ task.status }} priority-{{ task.priority }}"
+                                       title="{{ task.title }} - {{ task.project.name }}">
+                                        {{ task.title|truncatechars:15 }}
+                                    </a>
                                 {% endif %}
                             {% endfor %}
                         </div>
                     </div>
-                    {% endwith %}
                 {% endif %}
             {% endfor %}
         {% endfor %}

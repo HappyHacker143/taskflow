@@ -453,19 +453,12 @@ def calendar_view(request):
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
 
-    # Получаем все задачи пользователя с дедлайнами
+    # Получаем ВСЕ задачи пользователя с дедлайнами
+    # Не группируем - просто передаём список
     user_tasks = Task.objects.filter(
         assignee=request.user,
         due_date__isnull=False
     ).select_related('project')
-
-    # Группируем задачи по датам
-    tasks_by_date = {}
-    for task in user_tasks:
-        date_key = task.due_date.strftime('%Y-%m-%d')
-        if date_key not in tasks_by_date:
-            tasks_by_date[date_key] = []
-        tasks_by_date[date_key].append(task)
 
     # Предыдущий и следующий месяц
     prev_month = month - 1 if month > 1 else 12
@@ -478,7 +471,7 @@ def calendar_view(request):
         'year': year,
         'month': month,
         'month_name': month_name,
-        'tasks_by_date': tasks_by_date,
+        'user_tasks': user_tasks,  # Просто список задач
         'prev_month': prev_month,
         'prev_year': prev_year,
         'next_month': next_month,
