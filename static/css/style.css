@@ -983,3 +983,34 @@ body {
 }
 
 }
+@media (max-width:900px){
+
+.container{
+padding:10px;
+}
+
+.page-header{
+flex-direction:column;
+gap:10px;
+}
+
+.kanban-board{
+
+grid-template-columns:1fr;
+
+}
+
+.table{
+
+font-size:13px;
+
+}
+
+.btn{
+
+padding:8px 10px;
+font-size:13px;
+
+}
+
+}
