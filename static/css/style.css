@@ -696,3 +696,290 @@ body {
 .toast-info {
     border-left: 4px solid var(--clr-info);
 }
+/* ============================================
+   GLOBAL FORM ELEMENTS
+============================================ */
+
+.form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--clr-border);
+    background: var(--clr-surface);
+    color: var(--clr-text);
+    font-size: 14px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--clr-accent);
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-help {
+    font-size: 12px;
+    color: var(--clr-text-muted);
+    margin-bottom: 6px;
+}
+
+/* ============================================
+   FILTER BAR
+============================================ */
+
+.filter-bar {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+}
+
+.filter-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+}
+
+/* ============================================
+   TABLE CARD
+============================================ */
+
+.table-card {
+    background: var(--clr-surface);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--clr-border);
+}
+
+/* ============================================
+   LINKS
+============================================ */
+
+.task-link {
+    color: var(--clr-text);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.task-link:hover {
+    color: var(--clr-accent);
+}
+
+.project-link {
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* ============================================
+   DATE
+============================================ */
+
+.task-date-overdue {
+    color: var(--clr-danger);
+    font-weight: 600;
+}
+
+/* ============================================
+   EMPTY STATE
+============================================ */
+
+.empty-state-full {
+    text-align: center;
+    padding: 80px 20px;
+    background: var(--clr-surface);
+    border-radius: var(--radius-lg);
+}
+
+.empty-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+}
+
+/* ============================================
+   FORM PAGE
+============================================ */
+
+.form-page {
+    display: flex;
+    justify-content: center;
+}
+
+.form-card {
+    width: 100%;
+    max-width: 700px;
+    background: var(--clr-surface);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    border: 1px solid var(--clr-border);
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+/* ============================================
+   PROJECT CARDS
+============================================ */
+
+.project-card-full {
+    background: var(--clr-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--clr-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.project-card-full-body {
+    padding: 16px;
+}
+
+.project-card-full-header {
+    padding: 16px;
+}
+
+.project-dot-lg {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.project-description {
+    font-size: 14px;
+    color: var(--clr-text-muted);
+}
+
+.project-stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* ============================================
+   PROGRESS BAR
+============================================ */
+
+.progress-bar {
+    height: 6px;
+    background: var(--clr-border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.progress-fill {
+    height: 100%;
+}
+
+/* ============================================
+   KANBAN BOARD
+============================================ */
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 16px;
+}
+
+.kanban-column {
+    background: var(--clr-surface);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+}
+
+.kanban-header {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.kanban-cards {
+    display: grid;
+    gap: 10px;
+}
+
+.kanban-card {
+    background: var(--clr-bg);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-decoration: none;
+    color: var(--clr-text);
+}
+
+.kanban-card:hover {
+    background: var(--clr-surface-hover);
+}
+
+/* ============================================
+   MEMBERS GRID
+============================================ */
+
+.members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(220px,1fr));
+    gap: 12px;
+}
+
+.member-card {
+    display: flex;
+    gap: 10px;
+    background: var(--clr-surface);
+    border-radius: var(--radius);
+    padding: 10px;
+    border: 1px solid var(--clr-border);
+    cursor: pointer;
+}
+
+.member-card.selected {
+    border-color: var(--clr-accent);
+}
+
+.member-card-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:600;
+}
+
+.member-card-name {
+    font-weight: 500;
+}
+
+/* ============================================
+   RESPONSIVE FIX
+============================================ */
+
+@media (max-width: 900px) {
+
+.kanban-board {
+    grid-template-columns: 1fr;
+}
+
+.filter-form {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.form-row {
+    grid-template-columns: 1fr;
+}
+
+}
