@@ -1,0 +1,276 @@
+{% extends "tasks/base.html" %}
+{% block title %}Календарь — TaskFlow{% endblock %}
+
+{% block extra_css %}
+<style>
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    background: var(--clr-surface);
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--clr-border);
+}
+
+.calendar-title {
+    font-size: 28px;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 12px;
+}
+
+.calendar-nav-btn {
+    padding: 10px 16px;
+    background: var(--clr-bg);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text);
+    text-decoration: none;
+    font-weight: 600;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calendar-nav-btn:hover {
+    background: var(--clr-surface-hover);
+    border-color: var(--clr-accent);
+    transform: translateY(-2px);
+}
+
+.calendar-grid {
+    background: var(--clr-surface);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    border: 1px solid var(--clr-border);
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 2px;
+}
+
+.calendar-weekday {
+    padding: 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+    background: var(--clr-bg);
+    border-radius: var(--radius);
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.calendar-day {
+    min-height: 120px;
+    padding: 12px;
+    background: var(--clr-bg);
+    border-radius: var(--radius);
+    position: relative;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.calendar-day:hover {
+    background: var(--clr-surface-hover);
+    transform: scale(1.02);
+    z-index: 10;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+}
+
+.calendar-day.empty {
+    background: transparent;
+    cursor: default;
+}
+
+.calendar-day.empty:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.calendar-day.today {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 2px solid var(--clr-accent);
+}
+
+.calendar-day-number {
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 8px;
+    color: var(--clr-text);
+}
+
+.calendar-day.today .calendar-day-number {
+    color: var(--clr-accent);
+}
+
+.calendar-tasks {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.calendar-task {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 3px solid;
+    transition: var(--transition);
+}
+
+.calendar-task:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-task.status-todo {
+    background: rgba(100, 116, 139, 0.2);
+    border-color: #64748b;
+    color: #94a3b8;
+}
+
+.calendar-task.status-in_progress {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+    color: #60a5fa;
+}
+
+.calendar-task.status-review {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.calendar-task.status-done {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #34d399;
+}
+
+.calendar-task.priority-urgent {
+    animation: pulse 2s infinite;
+}
+
+.calendar-legend {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--clr-bg);
+    border-radius: var(--radius);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--clr-text-muted);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-header">
+    <h1 class="calendar-title">📅 {{ month_name }} {{ year }}</h1>
+    <div class="calendar-nav">
+        <a href="?year={{ prev_year }}&month={{ prev_month }}" class="calendar-nav-btn">
+            ← Предыдущий
+        </a>
+        <a href="?year={{ today.year }}&month={{ today.month }}" class="calendar-nav-btn">
+            Сегодня
+        </a>
+        <a href="?year={{ next_year }}&month={{ next_month }}" class="calendar-nav-btn">
+            Следующий →
+        </a>
+    </div>
+</div>
+
+<div class="calendar-grid">
+    <div class="calendar-weekdays">
+        <div class="calendar-weekday">Пн</div>
+        <div class="calendar-weekday">Вт</div>
+        <div class="calendar-weekday">Ср</div>
+        <div class="calendar-weekday">Чт</div>
+        <div class="calendar-weekday">Пт</div>
+        <div class="calendar-weekday">Сб</div>
+        <div class="calendar-weekday">Вс</div>
+    </div>
+    
+    <div class="calendar-days">
+        {% for week in calendar %}
+            {% for day in week %}
+                {% if day == 0 %}
+                    <div class="calendar-day empty"></div>
+                {% else %}
+                    {% with date_key=year|stringformat:"s"|add:"-"|add:month|stringformat:"02d"|add:"-"|add:day|stringformat:"02d" %}
+                    <div class="calendar-day {% if year == today.year and month == today.month and day == today.day %}today{% endif %}">
+                        <div class="calendar-day-number">{{ day }}</div>
+                        <div class="calendar-tasks">
+                            {% for task in tasks_by_date|default_if_none:dict %}
+                                {% if date_key in tasks_by_date %}
+                                    {% for task in tasks_by_date|get_item:date_key %}
+                                        <a href="{% url 'task_detail' task.pk %}" 
+                                           class="calendar-task status-{{ task.status }} priority-{{ task.priority }}"
+                                           title="{{ task.title }} - {{ task.project.name }}">
+                                            {{ task.title|truncatechars:20 }}
+                                        </a>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+    
+    <div class="calendar-legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #64748b;"></div>
+            <span>К выполнению</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #3b82f6;"></div>
+            <span>В работе</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #f59e0b;"></div>
+            <span>На проверке</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #10b981;"></div>
+            <span>Готово</span>
+        </div>
+    </div>
+</div>
+{% endblock %}

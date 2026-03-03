@@ -9,6 +9,7 @@ urlpatterns = [
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
     path('', views.dashboard, name='home'),
+    path('calendar/', views.calendar_view, name='calendar'),
 
     # Projects
     path('projects/', views.project_list, name='project_list'),

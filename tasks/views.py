@@ -1,5 +1,6 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.utils import timezone
+import calendar
 from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
@@ -257,13 +258,26 @@ def task_create(request, project_pk=None):
 @login_required
 def task_detail(request, pk):
     task = get_object_or_404(Task, pk=pk)
-    comments = task.comments.all()
-    comment_form = CommentForm()
-    return render(request, 'tasks/task_detail.html', {
+    comments = task.comments.all().select_related('author', 'author__profile').order_by('created_at')
+
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.task = task
+            comment.author = request.user
+            comment.save()
+            messages.success(request, 'Комментарий добавлен!')
+            return redirect('task_detail', pk=task.pk)  # ВАЖНО!
+    else:
+        form = CommentForm()
+
+    context = {
         'task': task,
         'comments': comments,
-        'comment_form': comment_form,
-    })
+        'form': form,
+    }
+    return render(request, 'tasks/task_detail.html', context)
 
 
 @login_required
@@ -427,3 +441,49 @@ def department_list(request):
         employee_count=Count('employees')
     ).order_by('name')
     return render(request, 'tasks/department_list.html', {'departments': departments})
+
+
+@login_required
+def calendar_view(request):
+    # Получаем текущую дату или дату из параметра
+    year = int(request.GET.get('year', timezone.now().year))
+    month = int(request.GET.get('month', timezone.now().month))
+
+    # Создаём календарь
+    cal = calendar.monthcalendar(year, month)
+    month_name = calendar.month_name[month]
+
+    # Получаем все задачи пользователя с дедлайнами
+    user_tasks = Task.objects.filter(
+        assignee=request.user,
+        due_date__isnull=False
+    ).select_related('project')
+
+    # Группируем задачи по датам
+    tasks_by_date = {}
+    for task in user_tasks:
+        date_key = task.due_date.strftime('%Y-%m-%d')
+        if date_key not in tasks_by_date:
+            tasks_by_date[date_key] = []
+        tasks_by_date[date_key].append(task)
+
+    # Предыдущий и следующий месяц
+    prev_month = month - 1 if month > 1 else 12
+    prev_year = year if month > 1 else year - 1
+    next_month = month + 1 if month < 12 else 1
+    next_year = year if month < 12 else year + 1
+
+    context = {
+        'calendar': cal,
+        'year': year,
+        'month': month,
+        'month_name': month_name,
+        'tasks_by_date': tasks_by_date,
+        'prev_month': prev_month,
+        'prev_year': prev_year,
+        'next_month': next_month,
+        'next_year': next_year,
+        'today': timezone.now().date(),
+    }
+
+    return render(request, 'tasks/calendar.html', context)

@@ -64,6 +64,7 @@
         </div>
     </div>
 
+
     <!-- SIDEBAR INFO -->
     <aside class="task-detail-sidebar">
         <div class="task-detail-meta-card">
@@ -126,4 +127,27 @@
     </aside>
 </div>
 
+{% endblock %}
+{% block extra_js %}
+<script>
+// AJAX подгрузка новых комментариев
+function loadComments() {
+    fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const newComments = doc.querySelector('.comments-list');
+            const currentComments = document.querySelector('.comments-list');
+
+            if (newComments && currentComments) {
+                currentComments.innerHTML = newComments.innerHTML;
+            }
+        })
+        .catch(error => console.error('Error loading comments:', error));
+}
+
+// Обновляем комментарии каждые 5 секунд
+setInterval(loadComments, 5000);
+</script>
 {% endblock %}
