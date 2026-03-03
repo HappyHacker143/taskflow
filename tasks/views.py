@@ -91,6 +91,20 @@ def dashboard(request):
         status__in=['todo', 'in_progress', 'review']
     ).order_by('due_date')[:3]
 
+    # НОВОЕ: Задачи которые скоро просрочатся (через 1-2 дня)
+    today = timezone.now().date()
+    soon_deadline = today + timedelta(days=2)  # Через 2 дня
+
+    soon_overdue_tasks = user_tasks.filter(
+        due_date__gt=today,
+        due_date__lte=soon_deadline,
+        status__in=['todo', 'in_progress', 'review']
+    ).order_by('due_date')
+
+    # Добавляем количество дней до дедлайна для каждой задачи
+    for task in soon_overdue_tasks:
+        task.days_until_due = (task.due_date - today).days
+
     # Последние активности
     recent_tasks = user_tasks.order_by('-created_at')[:5]
 
@@ -116,6 +130,8 @@ def dashboard(request):
         'last_7_days': last_7_days,
         'tasks_last_7_days': tasks_last_7_days,
         'upcoming_deadlines': upcoming_deadlines,
+        'soon_overdue_tasks': soon_overdue_tasks,  # НОВОЕ
+        'soon_overdue_count': soon_overdue_tasks.count(),  # НОВОЕ - для бейджа
         'team_workload': team_workload,
     }
 

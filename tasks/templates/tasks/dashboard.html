@@ -101,6 +101,29 @@
     box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
     transition: all var(--transition);
     font-size: 28px;
+    position: relative;
+}
+
+.ai-notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    background: #ef4444;
+    border-radius: 50%;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 .ai-chat-bubble:hover {
@@ -210,6 +233,24 @@
 .ai-message.user .ai-bubble {
     background: var(--clr-accent);
     color: white;
+}
+
+.ai-warning {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid #ef4444;
+    padding: 8px 12px;
+    margin-top: 8px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.ai-task-item {
+    background: var(--clr-surface);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 6px;
+    font-size: 13px;
+    border-left: 3px solid #f59e0b;
 }
 
 .ai-chat-input {
@@ -351,6 +392,9 @@
 <div class="ai-assistant-widget">
     <div class="ai-chat-bubble" id="aiChatToggle">
         🤖
+        {% if soon_overdue_count > 0 %}
+        <span class="ai-notification-badge">{{ soon_overdue_count }}</span>
+        {% endif %}
     </div>
 
     <div class="ai-chat-panel" id="aiChatPanel">
@@ -364,10 +408,24 @@
                 <div class="ai-avatar">🤖</div>
                 <div class="ai-bubble">
                     Привет, {{ user.first_name }}! 👋<br><br>
-                    У тебя <strong>{{ pending_tasks }}</strong> активных задач.<br>
-                    {% if upcoming_deadlines %}
-                    Ближайший дедлайн: <strong>{{ upcoming_deadlines.0.title }}</strong> — {{ upcoming_deadlines.0.due_date|date:"d.m.Y" }}
+                    У тебя <strong>{{ pending_tasks }}</strong> активных задач.
+
+                    {% if soon_overdue_tasks %}
+                    <div class="ai-warning">
+                        ⚠️ <strong>Внимание!</strong> Скоро просрочатся:
+                    </div>
+                    {% for task in soon_overdue_tasks %}
+                    <div class="ai-task-item">
+                        📌 <strong>{{ task.title }}</strong><br>
+                        🕐 Через {{ task.days_until_due }} дн. ({{ task.due_date|date:"d.m.Y" }})
+                    </div>
+                    {% endfor %}
                     {% endif %}
+
+                    {% if upcoming_deadlines and not soon_overdue_tasks %}
+                    <br>Ближайший дедлайн: <strong>{{ upcoming_deadlines.0.title }}</strong> — {{ upcoming_deadlines.0.due_date|date:"d.m.Y" }}
+                    {% endif %}
+
                     <div class="ai-suggestions">
                         <div class="ai-suggestion" data-query="Какие у меня задачи?">Мои задачи</div>
                         <div class="ai-suggestion" data-query="Что просрочено?">Просроченные</div>
