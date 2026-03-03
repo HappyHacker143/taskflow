@@ -1,3 +1,5 @@
+from datetime import timedelta
+from django.db.models import Count, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -42,39 +44,80 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    user = request.user
-    projects = Project.objects.filter(
-        Q(created_by=user) | Q(members=user)
-    ).distinct()
+    # Проекты пользователя
+    user_projects = Project.objects.filter(members=request.user)
 
-    my_tasks = Task.objects.filter(assignee=user).order_by('-created_at')[:10]
+    # Задачи пользователя
+    user_tasks = Task.objects.filter(assignee=request.user).select_related('project')
 
-    # Stats
-    total_tasks = Task.objects.filter(
-        Q(project__created_by=user) | Q(project__members=user)
-    ).distinct().count()
-    done_tasks = Task.objects.filter(
-        Q(project__created_by=user) | Q(project__members=user),
-        status='done'
-    ).distinct().count()
-    in_progress_tasks = Task.objects.filter(
-        Q(project__created_by=user) | Q(project__members=user),
-        status='in_progress'
-    ).distinct().count()
-    overdue_tasks = [t for t in Task.objects.filter(
-        Q(project__created_by=user) | Q(project__members=user)
-    ).exclude(status='done') if t.is_overdue]
+    # Базовая статистика
+    total_tasks = user_tasks.count()
+    completed_tasks = user_tasks.filter(status='done').count()
+    pending_tasks = user_tasks.exclude(status='done').count()
+    overdue_tasks = user_tasks.filter(
+        due_date__lt=timezone.now().date(),
+        status__in=['todo', 'in_progress', 'review']
+    ).count()
+
+    # Статистика по статусам для графика
+    tasks_by_status = {
+        'todo': user_tasks.filter(status='todo').count(),
+        'in_progress': user_tasks.filter(status='in_progress').count(),
+        'review': user_tasks.filter(status='review').count(),
+        'done': user_tasks.filter(status='done').count(),
+    }
+
+    # Статистика по приоритетам
+    tasks_by_priority = {
+        'low': user_tasks.filter(priority='low').count(),
+        'medium': user_tasks.filter(priority='medium').count(),
+        'high': user_tasks.filter(priority='high').count(),
+        'urgent': user_tasks.filter(priority='urgent').count(),
+    }
+
+    # Задачи за последние 7 дней (для графика активности)
+    last_7_days = []
+    tasks_last_7_days = []
+    for i in range(6, -1, -1):
+        day = timezone.now().date() - timedelta(days=i)
+        last_7_days.append(day.strftime('%d.%m'))
+        count = user_tasks.filter(created_at__date=day).count()
+        tasks_last_7_days.append(count)
+
+    # Ближайшие дедлайны (для AI ассистента)
+    upcoming_deadlines = user_tasks.filter(
+        due_date__gte=timezone.now().date(),
+        status__in=['todo', 'in_progress', 'review']
+    ).order_by('due_date')[:3]
+
+    # Последние активности
+    recent_tasks = user_tasks.order_by('-created_at')[:5]
+
+    # Нагрузка команды (для admin/managers)
+    team_workload = None
+    if request.user.is_superuser or request.user.profile.role in ['admin', 'manager']:
+        from django.contrib.auth.models import User
+        team_workload = User.objects.filter(
+            assigned_tasks__isnull=False
+        ).annotate(
+            active_tasks=Count('assigned_tasks', filter=Q(assigned_tasks__status__in=['todo', 'in_progress', 'review']))
+        ).order_by('-active_tasks')[:5]
 
     context = {
-        'projects': projects,
-        'my_tasks': my_tasks,
-        'stats': {
-            'total': total_tasks,
-            'done': done_tasks,
-            'in_progress': in_progress_tasks,
-            'overdue': len(overdue_tasks),
-        }
+        'user_projects': user_projects[:5],
+        'recent_tasks': recent_tasks,
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'overdue_tasks': overdue_tasks,
+        'tasks_by_status': tasks_by_status,
+        'tasks_by_priority': tasks_by_priority,
+        'last_7_days': last_7_days,
+        'tasks_last_7_days': tasks_last_7_days,
+        'upcoming_deadlines': upcoming_deadlines,
+        'team_workload': team_workload,
     }
+
     return render(request, 'tasks/dashboard.html', context)
 
 
