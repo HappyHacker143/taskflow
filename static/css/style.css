@@ -2416,3 +2416,276 @@ a[class*="btn"]:hover {
         opacity: 1;
     }
 }
+/* ═══════════════════════════════════════════
+   TASK DETAIL PAGE - НЕДОСТАЮЩИЕ СТИЛИ
+   ДОБАВЬТЕ В САМЫЙ КОНЕЦ style.css
+   ═══════════════════════════════════════════ */
+
+/* BREADCRUMB */
+.breadcrumb {
+    font-size: 14px;
+    color: var(--clr-text-muted);
+    margin-bottom: 24px;
+}
+
+.breadcrumb a {
+    color: var(--clr-text-muted);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.breadcrumb a:hover {
+    color: var(--clr-accent);
+}
+
+.breadcrumb span {
+    color: var(--clr-text);
+}
+
+/* TASK DETAIL LAYOUT */
+.task-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 24px;
+}
+
+/* MAIN CONTENT */
+.task-detail-main {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+}
+
+.task-detail-header {
+    margin-bottom: 24px;
+}
+
+.task-detail-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.task-status-dot-lg {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.task-status-dot-lg.status-todo {
+    background: #64748b;
+}
+
+.task-status-dot-lg.status-in_progress {
+    background: #3b82f6;
+}
+
+.task-status-dot-lg.status-review {
+    background: #f59e0b;
+}
+
+.task-status-dot-lg.status-done {
+    background: #10b981;
+}
+
+.task-detail-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--clr-text);
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-overdue {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.task-detail-description {
+    color: var(--clr-text-muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.task-detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.tag {
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--clr-accent);
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tag-lg {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+/* SIDEBAR */
+.task-detail-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.task-detail-meta-card {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+
+.task-detail-meta-card h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--clr-border);
+    color: var(--clr-text);
+}
+
+.meta-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--clr-border);
+}
+
+.meta-item:last-child {
+    border-bottom: none;
+}
+
+.meta-label {
+    font-size: 13px;
+    color: var(--clr-text-muted);
+    font-weight: 500;
+}
+
+.meta-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--clr-text);
+    text-align: right;
+}
+
+.meta-link {
+    color: var(--clr-accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.meta-link:hover {
+    text-decoration: underline;
+}
+
+.meta-assignee {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.member-avatar-xs {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+}
+
+.text-danger {
+    color: #ef4444;
+}
+
+/* TASK DETAIL ACTIONS */
+.task-detail-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.task-detail-actions .btn-primary,
+.task-detail-actions .btn-danger {
+    width: 100%;
+    justify-content: center;
+}
+
+/* STATUS BADGES */
+.status-badge-todo {
+    background: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
+
+.status-badge-in_progress {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.status-badge-review {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.status-badge-done {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+/* PRIORITY COLORS */
+.priority-low {
+    color: #64748b;
+}
+
+.priority-medium {
+    color: #3b82f6;
+}
+
+.priority-high {
+    color: #f59e0b;
+}
+
+.priority-urgent {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+    .task-detail-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .task-detail-sidebar {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .task-detail-main {
+        padding: 20px;
+    }
+
+    .task-detail-title {
+        font-size: 24px;
+    }
+
+    .task-detail-meta-card {
+        padding: 20px;
+    }
+}
