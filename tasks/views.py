@@ -543,3 +543,19 @@ def kanban_update_status(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+def project_detail(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+
+    # Группируем задачи по статусам
+    tasks_by_status = {
+        'todo': project.tasks.filter(status='todo').count(),
+        'in_progress': project.tasks.filter(status='in_progress').count(),
+        'review': project.tasks.filter(status='review').count(),
+        'done': project.tasks.filter(status='done').count(),
+    }
+
+    context = {
+        'project': project,
+        'tasks_by_status': tasks_by_status,
+    }
+    return render(request, 'tasks/project_detail.html', context)

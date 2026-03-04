@@ -1,26 +1,48 @@
 {% extends "tasks/base_auth.html" %}
-{% block title %}Войти — TaskFlow{% endblock %}
+{% block title %}Вход — TaskFlow{% endblock %}
+
 {% block content %}
 <div class="auth-card">
     <div class="auth-header">
         <div class="auth-logo">TF</div>
-        <h1>Корпоративная система</h1>
+        <h1>Добро пожаловать!</h1>
         <p>Войдите для продолжения работы</p>
     </div>
+
     <form method="post" class="auth-form">
         {% csrf_token %}
+
         <div class="form-group">
-            <label>Логин</label>
-            <input type="text" name="username" class="form-input" placeholder="Введите логин" required autofocus>
+            <label for="id_username">Логин</label>
+            <input type="text"
+                   name="username"
+                   id="id_username"
+                   class="form-input"
+                   placeholder="Введите логин"
+                   required
+                   autofocus>
         </div>
+
         <div class="form-group">
-            <label>Пароль</label>
-            <input type="password" name="password" class="form-input" placeholder="Введите пароль" required>
+            <label for="id_password">Пароль</label>
+            <input type="password"
+                   name="password"
+                   id="id_password"
+                   class="form-input"
+                   placeholder="Введите пароль"
+                   required>
         </div>
-        <button type="submit" class="btn-primary btn-full">Войти</button>
+
+        <button type="submit" class="btn btn-primary btn-full">
+            Войти →
+        </button>
+
+        <div class="auth-footer">
+            <p class="auth-hint">
+                Используйте тестовый аккаунт:<br>
+                <strong>admin / admin</strong>
+            </p>
+        </div>
     </form>
-    <div class="auth-footer">
-        <p class="auth-hint">Обратитесь к администратору для получения доступа</p>
-    </div>
 </div>
 {% endblock %}

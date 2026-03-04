@@ -1,93 +1,479 @@
 {% extends "tasks/base.html" %}
-{% load custom_filters %}
+{% load static %}
+
 {% block title %}{{ project.name }} — TaskFlow{% endblock %}
+
+{% block extra_css %}
+<style>
+.project-detail-header {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+}
+
+.project-detail-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, {{ project.color }}, var(--clr-accent));
+}
+
+.project-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.project-title-section {
+    flex: 1;
+}
+
+.project-detail-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.project-color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+.project-description-full {
+    font-size: 16px;
+    color: var(--clr-text-muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.project-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.project-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.project-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.meta-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--clr-text-muted);
+}
+
+.meta-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--clr-text);
+}
+
+.project-progress-section {
+    margin-top: 24px;
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.progress-percentage {
+    font-weight: 700;
+    color: var(--clr-accent);
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--clr-bg);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, {{ project.color }}, var(--clr-accent));
+    transition: width 0.3s ease;
+}
+
+/* Kanban Board Styles */
+.kanban-section {
+    margin-top: 32px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.kanban-column {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    min-height: 400px;
+}
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--clr-border);
+}
+
+.kanban-column-title {
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kanban-column-count {
+    background: var(--clr-bg);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.task-card {
+    background: var(--clr-bg);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: var(--transition);
+}
+
+.task-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    border-color: var(--clr-accent);
+}
+
+.task-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.task-card-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--clr-text);
+    text-decoration: none;
+    flex: 1;
+}
+
+.task-card-title:hover {
+    color: var(--clr-accent);
+}
+
+.task-priority-badge {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.priority-low {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.priority-medium {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.priority-high {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.priority-urgent {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.task-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--clr-border);
+}
+
+.task-assignee {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+}
+
+.task-due-date {
+    font-size: 11px;
+    color: var(--clr-text-muted);
+}
+
+.task-overdue {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+@media (max-width: 1200px) {
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+
+    .project-header-top {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .project-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-
-<div class="page-header">
-    <div>
-        <div class="breadcrumb">
-            <a href="{% url 'project_list' %}">Проекты</a> /
-            <span style="color: {{ project.color }}">{{ project.name }}</span>
+<div class="project-detail-header">
+    <div class="project-header-top">
+        <div class="project-title-section">
+            <h1 class="project-detail-title">
+                <span class="project-color-dot" style="background: {{ project.color }}"></span>
+                {{ project.name }}
+            </h1>
+            <p class="project-description-full">{{ project.description }}</p>
         </div>
-        <h1 class="page-title" style="color: {{ project.color }}">{{ project.name }}</h1>
-        <p class="page-subtitle">{{ project.description|truncatewords:25 }}</p>
-    </div>
-    <div class="page-header-actions">
-        <a href="{% url 'task_create_in_project' project.pk %}" class="btn-primary">+ Задача</a>
-        <a href="{% url 'project_edit' project.pk %}" class="btn-ghost">Настройки</a>
-    </div>
-</div>
 
-<!-- Project progress bar -->
-<div class="project-progress-full">
-    <div class="progress-bar-lg">
-        <div class="progress-fill" style="width: {{ project.progress_percent }}%; background-color: {{ project.color }}"></div>
-    </div>
-    <span class="progress-label">{{ project.progress_percent }}% ({{ project.completed_task_count }} из {{ project.task_count }})</span>
-</div>
-
-<!-- SEARCH & FILTER -->
-<div class="filter-bar">
-    <form method="get" class="filter-form">
-        <input type="text" name="search" value="{{ search }}" class="form-input search-input" placeholder="Поиск задач...">
-        <select name="status" class="form-input filter-select" onchange="this.form.submit()">
-            <option value="" {% if not status_filter %}selected{% endif %}>Все статусы</option>
-            <option value="todo" {% if status_filter == 'todo' %}selected{% endif %}>Не начата</option>
-            <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>В работе</option>
-            <option value="review" {% if status_filter == 'review' %}selected{% endif %}>На проверке</option>
-            <option value="done" {% if status_filter == 'done' %}selected{% endif %}>Завершена</option>
-        </select>
-        <button type="submit" class="btn-ghost btn-sm">Найти</button>
-    </form>
-</div>
-
-<!-- KANBAN BOARD -->
-<div class="kanban-board">
-    {% for status, label in kanban_columns %}
-    <div class="kanban-column">
-        <div class="kanban-header status-header-{{ status }}">
-            <span class="kanban-title">{{ label }}</span>
-            <span class="kanban-count">{{ kanban_dict|get_item:status|length }}</span>
-        </div>
-        <div class="kanban-cards">
-            {% for task in kanban_dict|get_item:status %}
-            <a href="{% url 'task_detail' task.pk %}" class="kanban-card">
-                {% if task.is_overdue %}
-                    <div class="kanban-card-overdue"></div>
-                {% endif %}
-                <div class="kanban-card-header">
-                    <span class="kanban-card-priority priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
-                    {% if task.due_date %}
-                        <span class="kanban-card-date {% if task.is_overdue %}overdue-date{% endif %}">
-                            {{ task.due_date|date:"d.m.Y" }}
-                        </span>
-                    {% endif %}
-                </div>
-                <h4 class="kanban-card-title">{{ task.title }}</h4>
-                {% if task.tag_list %}
-                <div class="kanban-card-tags">
-                    {% for tag in task.tag_list %}
-                        <span class="tag">{{ tag }}</span>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                <div class="kanban-card-footer">
-                    {% if task.assignee %}
-                        <div class="member-avatar member-avatar-xs" style="background: {{ task.assignee.profile.avatar_color }}" title="{{ task.assignee.profile.display_name }} - {{ task.assignee.profile.position }}">
-                            {{ task.assignee.profile.initials }}
-                        </div>
-                    {% else %}
-                        <span class="kanban-unassigned">Не назначено</span>
-                    {% endif %}
-                    <span class="kanban-card-comments">💬 {{ task.comments.count }}</span>
-                </div>
+        <div class="project-actions">
+            <a href="{% url 'task_create' project.pk %}" class="btn btn-primary">
+                + Задача
             </a>
-            {% empty %}
-            <div class="kanban-empty">Задач нет</div>
+            <a href="{% url 'project_edit' project.pk %}" class="btn btn-ghost">
+                Настройки
+            </a>
+        </div>
+    </div>
+
+    <div class="project-meta-grid">
+        <div class="project-meta-item">
+            <span class="meta-label">Всего задач</span>
+            <span class="meta-value">{{ tasks_by_status.todo|add:tasks_by_status.in_progress|add:tasks_by_status.review|add:tasks_by_status.done }}</span>
+        </div>
+        <div class="project-meta-item">
+            <span class="meta-label">Завершено</span>
+            <span class="meta-value">{{ tasks_by_status.done }}</span>
+        </div>
+        <div class="project-meta-item">
+            <span class="meta-label">В работе</span>
+            <span class="meta-value">{{ tasks_by_status.in_progress }}</span>
+        </div>
+        <div class="project-meta-item">
+            <span class="meta-label">Участников</span>
+            <span class="meta-value">{{ project.members.count }}</span>
+        </div>
+    </div>
+
+    <div class="project-progress-section">
+        <div class="progress-label">
+            <span>Прогресс выполнения</span>
+            <span class="progress-percentage">{{ project.progress_percent }}%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ project.progress_percent }}%; background: {{ project.color }}"></div>
+        </div>
+    </div>
+</div>
+
+<div class="kanban-section">
+    <div class="section-header">
+        <h2 class="section-title">Задачи проекта</h2>
+    </div>
+
+    <div class="kanban-board">
+        <!-- К выполнению -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="kanban-column-title" style="color: #64748b;">Не начата</span>
+                <span class="kanban-column-count">{{ tasks_by_status.todo }}</span>
+            </div>
+            {% for task in project.tasks.all %}
+                {% if task.status == 'todo' %}
+                <div class="task-card">
+                    <div class="task-card-header">
+                        <a href="{% url 'task_detail' task.pk %}" class="task-card-title">{{ task.title }}</a>
+                        <span class="task-priority-badge priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
+                    </div>
+                    <div class="task-card-footer">
+                        <div class="task-assignee">
+                            <div class="assignee-avatar" style="background: {{ task.assignee.profile.avatar_color }}" title="{{ task.assignee.get_full_name }}">
+                                {{ task.assignee.profile.initials }}
+                            </div>
+                        </div>
+                        {% if task.due_date %}
+                        <div class="task-due-date {% if task.is_overdue %}task-overdue{% endif %}">
+                            {{ task.due_date|date:"d.m.Y" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- В работе -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="kanban-column-title" style="color: #3b82f6;">В работе</span>
+                <span class="kanban-column-count">{{ tasks_by_status.in_progress }}</span>
+            </div>
+            {% for task in project.tasks.all %}
+                {% if task.status == 'in_progress' %}
+                <div class="task-card">
+                    <div class="task-card-header">
+                        <a href="{% url 'task_detail' task.pk %}" class="task-card-title">{{ task.title }}</a>
+                        <span class="task-priority-badge priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
+                    </div>
+                    <div class="task-card-footer">
+                        <div class="task-assignee">
+                            <div class="assignee-avatar" style="background: {{ task.assignee.profile.avatar_color }}">
+                                {{ task.assignee.profile.initials }}
+                            </div>
+                        </div>
+                        {% if task.due_date %}
+                        <div class="task-due-date {% if task.is_overdue %}task-overdue{% endif %}">
+                            {{ task.due_date|date:"d.m.Y" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- На проверке -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="kanban-column-title" style="color: #f59e0b;">На проверке</span>
+                <span class="kanban-column-count">{{ tasks_by_status.review }}</span>
+            </div>
+            {% for task in project.tasks.all %}
+                {% if task.status == 'review' %}
+                <div class="task-card">
+                    <div class="task-card-header">
+                        <a href="{% url 'task_detail' task.pk %}" class="task-card-title">{{ task.title }}</a>
+                        <span class="task-priority-badge priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
+                    </div>
+                    <div class="task-card-footer">
+                        <div class="task-assignee">
+                            <div class="assignee-avatar" style="background: {{ task.assignee.profile.avatar_color }}">
+                                {{ task.assignee.profile.initials }}
+                            </div>
+                        </div>
+                        {% if task.due_date %}
+                        <div class="task-due-date {% if task.is_overdue %}task-overdue{% endif %}">
+                            {{ task.due_date|date:"d.m.Y" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Завершена -->
+        <div class="kanban-column">
+            <div class="kanban-column-header">
+                <span class="kanban-column-title" style="color: #10b981;">Завершена</span>
+                <span class="kanban-column-count">{{ tasks_by_status.done }}</span>
+            </div>
+            {% for task in project.tasks.all %}
+                {% if task.status == 'done' %}
+                <div class="task-card">
+                    <div class="task-card-header">
+                        <a href="{% url 'task_detail' task.pk %}" class="task-card-title">{{ task.title }}</a>
+                        <span class="task-priority-badge priority-{{ task.priority }}">{{ task.get_priority_label }}</span>
+                    </div>
+                    <div class="task-card-footer">
+                        <div class="task-assignee">
+                            <div class="assignee-avatar" style="background: {{ task.assignee.profile.avatar_color }}">
+                                {{ task.assignee.profile.initials }}
+                            </div>
+                        </div>
+                        {% if task.due_date %}
+                        <div class="task-due-date">
+                            {{ task.due_date|date:"d.m.Y" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             {% endfor %}
         </div>
     </div>
-    {% endfor %}
 </div>
-
 {% endblock %}

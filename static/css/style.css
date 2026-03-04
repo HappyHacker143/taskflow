@@ -1497,3 +1497,98 @@ body.sidebar-open {
         padding: 0;
     }
 }
+.btn {
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition);
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid var(--clr-border);
+    color: var(--clr-text);
+}
+
+.btn-ghost:hover {
+    background: var(--clr-surface);
+    border-color: var(--clr-accent);
+}
+
+.btn-danger {
+    background: var(--gradient-danger);
+    color: white;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+
+
+.auth-layout {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 450px;
+    background: var(--clr-surface);
+    border-radius: var(--radius-xl);
+    padding: 48px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--clr-border);
+}
+
+.auth-logo {
+    width: 80px;
+    height: 80px;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 32px;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--clr-bg);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius);
+    color: var(--clr-text);
+    font-size: 15px;
+    transition: var(--transition);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--clr-accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
