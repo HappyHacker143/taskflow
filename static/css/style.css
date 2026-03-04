@@ -871,7 +871,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 12px;
+    margin-top: auto;
 }
 
 .member-avatar {
@@ -896,7 +896,7 @@ body {
 .btn-full-card {
     width: 100%;
     text-align: center;
-    margin-top: 16px;
+    margin-top: auto;
 }
 
 .text-muted {
@@ -907,6 +907,7 @@ body {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
     border-color: rgba(99, 102, 241, 0.3);
+
 }
 
 /* ============================================
@@ -920,10 +921,14 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: var(--transition);
 }
 
 .project-card-full-body {
     padding: 16px;
+    flex: 1; /* ← ДОБАВИТЬ ЭТО! */
+    display: flex;
+    flex-direction: column;
 }
 
 .project-card-full-header {
