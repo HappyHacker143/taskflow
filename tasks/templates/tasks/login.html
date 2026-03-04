@@ -1,7 +1,191 @@
 {% extends "tasks/base_auth.html" %}
 {% block title %}Вход — TaskFlow{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Animated Background */
+.auth-layout {
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+}
+
+/* Gradient Animation */
+.auth-background::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+    animation: gradientShift 20s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    33% {
+        transform: translate(10%, -10%) rotate(120deg);
+    }
+    66% {
+        transform: translate(-10%, 10%) rotate(240deg);
+    }
+}
+
+/* Floating Particles */
+.particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.4);
+    pointer-events: none;
+    animation: float linear infinite;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) scale(1);
+        opacity: 0;
+    }
+}
+
+.particle:nth-child(1) {
+    left: 10%;
+    width: 80px;
+    height: 80px;
+    animation-duration: 25s;
+    animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+    left: 25%;
+    width: 60px;
+    height: 60px;
+    animation-duration: 30s;
+    animation-delay: 5s;
+    background: rgba(118, 75, 162, 0.3);
+}
+
+.particle:nth-child(3) {
+    left: 40%;
+    width: 100px;
+    height: 100px;
+    animation-duration: 35s;
+    animation-delay: 2s;
+}
+
+.particle:nth-child(4) {
+    left: 60%;
+    width: 70px;
+    height: 70px;
+    animation-duration: 28s;
+    animation-delay: 8s;
+    background: rgba(59, 130, 246, 0.3);
+}
+
+.particle:nth-child(5) {
+    left: 75%;
+    width: 90px;
+    height: 90px;
+    animation-duration: 32s;
+    animation-delay: 4s;
+}
+
+.particle:nth-child(6) {
+    left: 90%;
+    width: 65px;
+    height: 65px;
+    animation-duration: 27s;
+    animation-delay: 10s;
+    background: rgba(102, 126, 234, 0.25);
+}
+
+/* Grid Pattern */
+.grid-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(102, 126, 234, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(102, 126, 234, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(50px, 50px);
+    }
+}
+
+/* Auth card z-index */
+.auth-card {
+    position: relative;
+    z-index: 10;
+}
+
+/* Glow effect on hover */
+.auth-card:hover {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4),
+                0 0 60px rgba(102, 126, 234, 0.2);
+}
+
+/* Logo glow animation */
+.auth-logo {
+    animation: logoGlow 3s ease-in-out infinite;
+}
+
+@keyframes logoGlow {
+    0%, 100% {
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    }
+    50% {
+        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.6);
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<!-- Animated Background -->
+<div class="auth-background">
+    <div class="grid-pattern"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+</div>
+
+<!-- Login Card -->
 <div class="auth-card">
     <div class="auth-header">
         <div class="auth-logo">TF</div>
@@ -36,10 +220,6 @@
         <button type="submit" class="btn btn-primary btn-full">
             Войти →
         </button>
-
-        <div class="auth-footer">
-
-        </div>
     </form>
 </div>
 {% endblock %}
