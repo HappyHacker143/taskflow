@@ -37,29 +37,47 @@
         </div>
         {% endif %}
 
-        <!-- COMMENTS -->
-        <div class="comments-section">
-            <h3 class="comments-title">Комментарии ({{ comments|length }})</h3>
-            {% for comment in comments %}
-            <div class="comment">
-                <div class="comment-avatar" style="background: {{ comment.author.profile.avatar_color }}">{{ comment.author.profile.initials }}</div>
-                <div class="comment-body">
-                    <div class="comment-header">
-                        <strong class="comment-author">{{ comment.author.profile.display_name }}</strong>
-                        <span class="comment-date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
-                    </div>
-                    <p class="comment-text">{{ comment.text }}</p>
-                </div>
-            </div>
-            {% empty %}
-            <p class="comments-empty">Пока комментариев нет.</p>
-            {% endfor %}
+        <!-- EMPLOYEE CHAT -->
+        <div class="task-chat-section">
+            <h3 class="task-chat-title">💬 Обсуждение задачи ({{ task.comments.count }})</h3>
 
-            <!-- ADD COMMENT -->
-            <form method="post" action="{% url 'add_comment' task.pk %}" class="comment-form">
+            <div class="task-chat-messages" id="chatMessages">
+                {% for comment in task.comments.all %}
+                <div class="chat-message {% if comment.author == request.user %}chat-message-own{% endif %}">
+                    <div class="chat-avatar" style="background: {{ comment.author.profile.avatar_color }}">
+                        {{ comment.author.profile.initials }}
+                    </div>
+                    <div class="chat-bubble">
+                        <div class="chat-author">{{ comment.author.get_full_name }}</div>
+                        <div class="chat-text">{{ comment.text }}</div>
+                        <div class="chat-time">{{ comment.created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="chat-empty">
+                    <p>💬 Пока нет сообщений. Начните обсуждение!</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <form method="post" action="{% url 'add_comment' task.pk %}" class="task-chat-form" id="chatForm">
                 {% csrf_token %}
-                {{ comment_form.text }}
-                <button type="submit" class="btn-primary btn-sm">Добавить комментарий</button>
+                <div class="chat-input-wrapper">
+                    <textarea
+                        name="text"
+                        id="chatInput"
+                        placeholder="Напишите сообщение..."
+                        rows="2"
+                        required
+                    ></textarea>
+                    <button type="submit" class="chat-send-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Отправить
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -128,26 +146,54 @@
 </div>
 
 {% endblock %}
+
 {% block extra_js %}
 <script>
-// AJAX подгрузка новых комментариев
-function loadComments() {
+// Auto-scroll to latest message
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Auto-resize textarea
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Submit on Enter (Shift+Enter for new line)
+        chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('chatForm').submit();
+            }
+        });
+    }
+});
+
+// Auto-reload comments every 10 seconds
+setInterval(function() {
     fetch(window.location.href)
         .then(response => response.text())
         .then(html => {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const newComments = doc.querySelector('.comments-list');
-            const currentComments = document.querySelector('.comments-list');
+            const newMessages = doc.querySelector('#chatMessages');
+            const currentMessages = document.getElementById('chatMessages');
 
-            if (newComments && currentComments) {
-                currentComments.innerHTML = newComments.innerHTML;
+            if (newMessages && currentMessages) {
+                const wasScrolledToBottom = currentMessages.scrollHeight - currentMessages.scrollTop === currentMessages.clientHeight;
+                currentMessages.innerHTML = newMessages.innerHTML;
+
+                if (wasScrolledToBottom) {
+                    currentMessages.scrollTop = currentMessages.scrollHeight;
+                }
             }
         })
-        .catch(error => console.error('Error loading comments:', error));
-}
-
-// Обновляем комментарии каждые 5 секунд
-setInterval(loadComments, 5000);
+        .catch(error => console.error('Error loading messages:', error));
+}, 10000);
 </script>
 {% endblock %}

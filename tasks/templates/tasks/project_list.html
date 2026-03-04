@@ -7,7 +7,10 @@
         <h1 class="page-title">Проекты</h1>
         <p class="page-subtitle">Все ваши проекты</p>
     </div>
-    <a href="{% url 'project_create' %}" class="btn-primary">+ Новый проект</a>
+    <div class="page-header-actions">
+      <a href="{% url 'project_create' %}" class="btn-primary">+ Новый проект</a>
+    </div>
+
 </div>
 
 {% if projects %}
