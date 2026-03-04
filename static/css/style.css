@@ -2133,3 +2133,286 @@ select {
         max-height: 400px;
     }
 }
+/* ============================================
+   КРИТИЧЕСКИЕ ИСПРАВЛЕНИЯ - ДОБАВЬТЕ В КОНЕЦ CSS
+   ============================================ */
+
+/* КНОПКИ - ПОЛНАЯ ПЕРЕЗАПИСЬ */
+.btn-primary,
+a.btn-primary,
+button.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:hover,
+a.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.btn-ghost,
+a.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    background: transparent;
+    color: #94a3b8 !important;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-ghost:hover,
+a.btn-ghost:hover {
+    background: #334155;
+    color: #f1f5f9 !important;
+    border-color: #6366f1;
+    text-decoration: none !important;
+}
+
+.btn-danger,
+a.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white !important;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover,
+a.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+    color: white !important;
+    text-decoration: none !important;
+}
+
+/* ИКОНКИ В КНОПКАХ - ВИДИМЫЕ */
+.btn-ghost.btn-xs,
+a.btn-ghost.btn-xs {
+    padding: 6px 10px;
+    font-size: 16px;
+    min-width: 32px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ИКОНКИ РЕДАКТИРОВАТЬ/УДАЛИТЬ */
+.btn-ghost.btn-xs::before {
+    font-size: 16px;
+    opacity: 1;
+}
+
+.project-card-actions .btn-ghost.btn-xs {
+    background: rgba(51, 65, 85, 0.5);
+    border: 1px solid #334155;
+    color: #94a3b8 !important;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.project-card-actions .btn-ghost.btn-xs:hover {
+    background: #334155;
+    color: #f1f5f9 !important;
+    border-color: #6366f1;
+}
+
+.project-card-actions .btn-ghost.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #ef4444 !important;
+}
+
+/* TABLE ACTIONS BUTTONS */
+.table-actions .btn-ghost.btn-xs {
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 16px;
+    background: rgba(51, 65, 85, 0.5);
+}
+
+.table-actions .btn-ghost.btn-xs:hover {
+    background: #334155;
+    border-color: #6366f1;
+}
+
+.table-actions .btn-ghost.btn-danger {
+    color: #ef4444 !important;
+}
+
+.table-actions .btn-ghost.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+}
+
+/* КНОПКА "ОТКРЫТЬ" В ПРОЕКТАХ */
+.btn-full-card,
+a.btn-full-card {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white !important;
+    text-align: center;
+    text-decoration: none !important;
+    border-radius: 8px;
+    font-weight: 600;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.btn-full-card:hover,
+a.btn-full-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white !important;
+}
+
+/* SVG ИКОНКИ - ВИДИМЫЕ */
+.nav-icon svg,
+.nav-link svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 1 !important;
+}
+
+/* KANBAN ИКОНКА - ИСПРАВЛЕНИЕ */
+.nav-link svg rect {
+    stroke: currentColor;
+    fill: none;
+}
+
+/* ИКОНКИ В КНОПКАХ ДЕЙСТВИЙ */
+.btn-ghost svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+}
+
+/* FORM ACTIONS */
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.form-actions .btn-primary {
+    flex: 0 0 auto;
+}
+
+.form-actions .btn-ghost {
+    flex: 0 0 auto;
+}
+
+/* РАЗМЕРЫ КНОПОК */
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.btn-xs {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.btn-full {
+    width: 100%;
+}
+
+/* PROJECT CARD ACTIONS - ВИДИМОСТЬ ИКОНОК */
+.project-card-actions {
+    display: flex;
+    gap: 6px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.project-card-full:hover .project-card-actions {
+    opacity: 1;
+}
+
+/* ИСПРАВЛЕНИЕ ТЕКСТА В ИКОНКАХ */
+.btn-xs {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* CONFIRM ACTIONS */
+.confirm-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+/* PAGE HEADER ACTIONS */
+.page-header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.page-header-actions .btn-primary {
+    white-space: nowrap;
+}
+
+/* УЛУЧШЕНИЕ ВИДИМОСТИ ВСЕХ ССЫЛОК-КНОПОК */
+a[class*="btn"] {
+    text-decoration: none !important;
+}
+
+a[class*="btn"]:hover {
+    text-decoration: none !important;
+}
+
+/* ИСПРАВЛЕНИЕ ДЛЯ МОБИЛЬНЫХ */
+@media (max-width: 768px) {
+    .btn-primary,
+    .btn-ghost,
+    .btn-danger {
+        min-height: 44px;
+        padding: 12px 20px;
+    }
+
+    .btn-xs {
+        min-height: 36px;
+        min-width: 36px;
+    }
+
+    .project-card-actions {
+        opacity: 1;
+    }
+}
