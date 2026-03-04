@@ -108,5 +108,3 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
 
-# Force static files reload
-STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

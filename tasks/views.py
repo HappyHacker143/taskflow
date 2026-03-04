@@ -12,7 +12,9 @@ from django.db.models import Q, Count
 from django.contrib.auth.models import User
 from .models import Project, Task, TaskComment, Department, UserProfile
 from .forms import ProjectForm, TaskForm, CommentForm, UserCreateForm, UserEditForm
-
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
 
 # ─── HELPERS ─────────────────────────────────────────────
 
@@ -480,3 +482,64 @@ def calendar_view(request):
     }
 
     return render(request, 'tasks/calendar.html', context)
+
+
+@login_required
+def kanban_view(request):
+    """Kanban доска с задачами пользователя"""
+    # Группируем задачи по статусам
+    user_tasks = Task.objects.filter(
+        Q(assignee=request.user) | Q(project__members=request.user)
+    ).select_related('project', 'assignee').distinct()
+
+    tasks_by_status = {
+        'todo': user_tasks.filter(status='todo').order_by('-priority', 'due_date'),
+        'in_progress': user_tasks.filter(status='in_progress').order_by('-priority', 'due_date'),
+        'review': user_tasks.filter(status='review').order_by('-priority', 'due_date'),
+        'done': user_tasks.filter(status='done').order_by('-updated_at')[:20],  # Показываем только последние 20
+    }
+
+    context = {
+        'tasks_by_status': tasks_by_status,
+        'total_tasks': user_tasks.count(),
+    }
+
+    return render(request, 'tasks/kanban.html', context)
+
+
+@login_required
+@require_POST
+def kanban_update_status(request):
+    """AJAX endpoint для обновления статуса задачи"""
+    try:
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        new_status = data.get('status')
+
+        # Проверяем что статус валидный
+        valid_statuses = ['todo', 'in_progress', 'review', 'done']
+        if new_status not in valid_statuses:
+            return JsonResponse({'error': 'Invalid status'}, status=400)
+
+        # Получаем задачу
+        task = get_object_or_404(Task, pk=task_id)
+
+        # Проверяем права доступа
+        if task.assignee != request.user and request.user not in task.project.members.all():
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+
+        # Обновляем статус
+        task.status = new_status
+        task.save()
+
+        return JsonResponse({
+            'success': True,
+            'task_id': task.id,
+            'new_status': new_status,
+            'status_display': task.get_status_display()
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+

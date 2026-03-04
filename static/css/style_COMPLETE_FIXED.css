@@ -833,6 +833,83 @@ body {
 }
 
 /* ============================================
+   PROJECTS GRID
+============================================ */
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.project-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.project-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.project-link {
+    color: var(--clr-text);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 18px;
+    transition: var(--transition);
+}
+
+.project-link:hover {
+    color: var(--clr-accent);
+}
+
+.project-members {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    border: 2px solid var(--clr-surface);
+}
+
+.member-avatar-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+}
+
+.btn-full-card {
+    width: 100%;
+    text-align: center;
+    margin-top: 16px;
+}
+
+.text-muted {
+    color: var(--clr-text-muted);
+}
+
+.project-card-full:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* ============================================
    PROJECT CARDS
 ============================================ */
 
@@ -1013,4 +1090,410 @@ font-size:13px;
 
 }
 
+}
+/* ============================================
+   MOBILE BURGER MENU
+   ============================================ */
+
+.mobile-menu-btn {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1001;
+    width: 48px;
+    height: 48px;
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: var(--radius);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transition: var(--transition);
+}
+
+.mobile-menu-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+}
+
+.mobile-menu-btn svg {
+    display: block;
+    margin: auto;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+body.sidebar-open {
+    overflow: hidden;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 240px;
+    }
+    
+    .main-content {
+        margin-left: 240px;
+        padding: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Show burger menu */
+    .mobile-menu-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Hide sidebar by default */
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        width: 280px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .sidebar.active {
+        left: 0;
+    }
+    
+    /* Main content full width */
+    .main-content {
+        margin-left: 0;
+        padding: 80px 16px 16px;
+    }
+    
+    /* Dashboard */
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .stat-card {
+        padding: 16px;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+    }
+    
+    .stat-icon {
+        font-size: 20px;
+    }
+    
+    /* Charts */
+    .charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .chart-card {
+        padding: 16px;
+    }
+    
+    /* Page header */
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    
+    .page-title {
+        font-size: 24px;
+    }
+    
+    .page-subtitle {
+        font-size: 14px;
+    }
+    
+    /* Projects grid */
+    .projects-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    /* Users grid */
+    .users-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+    }
+    
+    /* Kanban board */
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .kanban-column {
+        min-height: 400px;
+    }
+    
+    /* Task table */
+    .task-table {
+        font-size: 13px;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .task-table thead,
+    .task-table tbody,
+    .task-table tr,
+    .task-table th,
+    .task-table td {
+        display: block;
+    }
+    
+    .task-table thead {
+        display: none;
+    }
+    
+    .task-table tr {
+        margin-bottom: 12px;
+        border: 1px solid var(--clr-border);
+        border-radius: var(--radius);
+        padding: 12px;
+    }
+    
+    .task-table td {
+        padding: 8px;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .task-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--clr-text-muted);
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+    
+    /* Task detail */
+    .task-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    /* Forms */
+    .form-card {
+        padding: 20px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+    
+    /* Search filter */
+    .search-filter-row {
+        flex-direction: column;
+    }
+    
+    .search-input,
+    .filter-select,
+    .search-btn {
+        width: 100%;
+    }
+    
+    /* Calendar */
+    .calendar-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .calendar-title {
+        font-size: 22px;
+    }
+    
+    .calendar-nav {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .calendar-nav-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+        padding: 8px;
+    }
+    
+    .calendar-day-number {
+        font-size: 14px;
+    }
+    
+    .calendar-task {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    /* AI Chat */
+    .ai-chat-panel {
+        width: 100%;
+        height: 100vh;
+        bottom: 0;
+        right: 0;
+        border-radius: 0;
+    }
+    
+    .ai-chat-bubble {
+        bottom: 80px;
+        right: 16px;
+    }
+    
+    /* Auth */
+    .auth-card {
+        padding: 32px 24px;
+    }
+    
+    .auth-logo {
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Dashboard single column */
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+    }
+    
+    /* Kanban single column */
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+    
+    /* Page title */
+    .page-title {
+        font-size: 20px;
+    }
+    
+    /* Buttons */
+    .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+    
+    /* Task items */
+    .task-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    /* Calendar legend */
+    .calendar-legend {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    /* Navbar */
+    .sidebar-nav {
+        padding: 0 12px;
+    }
+    
+    .nav-link {
+        font-size: 14px;
+        padding: 10px 12px;
+    }
+}
+
+/* Landscape orientation fixes */
+@media (max-width: 768px) and (orientation: landscape) {
+    .stat-value {
+        font-size: 20px;
+    }
+    
+    .page-title {
+        font-size: 20px;
+    }
+    
+    .kanban-column {
+        min-height: 300px;
+    }
+}
+
+/* Touch optimizations */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch targets */
+    .btn,
+    .nav-link,
+    .task-item,
+    .project-card,
+    .kanban-card {
+        min-height: 44px;
+    }
+    
+    /* Disable hover effects on touch */
+    .btn:hover,
+    .nav-link:hover,
+    .task-item:hover {
+        transform: none;
+    }
+    
+    /* Enable active states */
+    .btn:active,
+    .nav-link:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Print styles */
+@media print {
+    .sidebar,
+    .mobile-menu-btn,
+    .sidebar-overlay,
+    .ai-assistant-widget,
+    .toast-container {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 0;
+    }
 }

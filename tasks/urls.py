@@ -10,6 +10,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('', views.dashboard, name='home'),
     path('calendar/', views.calendar_view, name='calendar'),
+    path('kanban/', views.kanban_view, name='kanban'),
+    path('kanban/update-status/', views.kanban_update_status, name='kanban_update_status'),
 
     # Projects
     path('projects/', views.project_list, name='project_list'),
