@@ -68,6 +68,7 @@ body {
 .layout {
     display: flex;
     min-height: 100vh;
+    position: relative;
 }
 
 .main-content {
@@ -75,6 +76,8 @@ body {
     margin-left: 280px;
     padding: 32px;
     transition: margin-left var(--transition);
+    position: relative;
+    z-index: 10;
 }
 
 .content-wrapper {
@@ -101,7 +104,7 @@ body {
 }
 
 .sidebar-brand {
-    padding: 0 24px 24px;
+    padding: 16px 24px 24px;
     border-bottom: 1px solid var(--clr-border);
     margin-bottom: 24px;
 }
@@ -119,6 +122,11 @@ body {
     transform: translateX(4px);
 }
 
+.brand-link:hover .brand-icon {
+    transform: scale(1.05);
+    box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+}
+
 .brand-icon {
     width: 48px;
     height: 48px;
@@ -130,15 +138,83 @@ body {
     font-weight: 700;
     font-size: 20px;
     box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+/* Animated background for logo */
+.brand-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    animation: logoShine 3s ease-in-out infinite;
+}
+
+@keyframes logoShine {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    50% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+}
+
+/* SVG Logo Icon Styles */
+.brand-icon svg {
+    position: relative;
+    z-index: 1;
+    color: #ffffff;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+.brand-icon .check-path {
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+    animation: checkDraw 2s ease-in-out infinite;
+}
+
+@keyframes checkDraw {
+    0%, 100% {
+        stroke-dashoffset: 20;
+        opacity: 0.6;
+    }
+    50% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
 }
 
 .brand-text {
     font-size: 24px;
     font-weight: 700;
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+    background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: gradientText 4s ease infinite;
+}
+
+@keyframes gradientText {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
 }
 
 /* ============================================
@@ -2692,5 +2768,172 @@ a[class*="btn"]:hover {
 
     .task-detail-meta-card {
         padding: 20px;
+    }
+}
+/* ═══════════════════════════════════════════
+   ANIMATED BACKGROUND (для всех страниц)
+   ═══════════════════════════════════════════ */
+
+.page-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Градиентная анимация */
+.bg-gradient {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.2) 0%, transparent 50%);
+    animation: gradientShift 25s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    33% {
+        transform: translate(10%, -10%) rotate(120deg);
+    }
+    66% {
+        transform: translate(-10%, 10%) rotate(240deg);
+    }
+}
+
+/* Сетка */
+.bg-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(102, 126, 234, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(102, 126, 234, 0.08) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 30s linear infinite;
+}
+
+@keyframes gridMove {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(50px, 50px);
+    }
+}
+
+/* Плавающие частицы */
+.bg-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.4);
+    pointer-events: none;
+    animation: particleFloat linear infinite;
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translateY(100vh) scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.9;
+    }
+    90% {
+        opacity: 0.9;
+    }
+    100% {
+        transform: translateY(-100vh) scale(1) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Разные частицы */
+.bg-particle:nth-child(3) {
+    left: 15%;
+    width: 80px;
+    height: 80px;
+    animation-duration: 28s;
+    animation-delay: 0s;
+}
+
+.bg-particle:nth-child(4) {
+    left: 35%;
+    width: 100px;
+    height: 100px;
+    animation-duration: 35s;
+    animation-delay: 5s;
+    background: rgba(118, 75, 162, 0.45);
+}
+
+.bg-particle:nth-child(5) {
+    left: 55%;
+    width: 70px;
+    height: 70px;
+    animation-duration: 30s;
+    animation-delay: 2s;
+}
+
+.bg-particle:nth-child(6) {
+    left: 70%;
+    width: 110px;
+    height: 110px;
+    animation-duration: 38s;
+    animation-delay: 8s;
+    background: rgba(59, 130, 246, 0.35);
+}
+
+.bg-particle:nth-child(7) {
+    left: 85%;
+    width: 90px;
+    height: 90px;
+    animation-duration: 32s;
+    animation-delay: 4s;
+}
+
+.bg-particle:nth-child(8) {
+    left: 25%;
+    width: 65px;
+    height: 65px;
+    animation-duration: 29s;
+    animation-delay: 10s;
+    background: rgba(102, 126, 234, 0.3);
+}
+
+/* Прозрачность для карточек */
+.stat-card,
+.chart-card,
+.project-card-full,
+.task-detail-main,
+.task-detail-meta-card,
+.form-card,
+.table-card,
+.kanban-column {
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+/* Сайдбар с эффектом стекла */
+.sidebar {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.97) 0%, rgba(15, 23, 42, 0.97) 100%);
+    backdrop-filter: blur(12px);
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+    .bg-particle {
+        display: none;
     }
 }
