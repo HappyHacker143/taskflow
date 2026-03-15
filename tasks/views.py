@@ -484,28 +484,107 @@ def calendar_view(request):
     return render(request, 'tasks/calendar.html', context)
 
 
+# ДОБАВЬТЕ/ЗАМЕНИТЕ в tasks/views.py
+
 @login_required
 def kanban_view(request):
-    """Kanban доска с задачами пользователя"""
-    # Группируем задачи по статусам
-    user_tasks = Task.objects.filter(
-        Q(assignee=request.user) | Q(project__members=request.user)
-    ).select_related('project', 'assignee').distinct()
+    """Kanban доска с фильтрами"""
 
+    # ИСПРАВЛЕНИЕ: Admin видит ВСЕ задачи
+    if request.user.is_superuser or request.user.profile.role == 'admin':
+        base_tasks = Task.objects.all()
+    else:
+        # Обычные пользователи видят свои задачи
+        base_tasks = Task.objects.filter(
+            Q(assignee=request.user) | Q(project__members=request.user)
+        ).distinct()
+
+    # Применяем фильтры
+    selected_project = request.GET.get('project', '')
+    selected_assignee = request.GET.get('assignee', '')
+    selected_priority = request.GET.get('priority', '')
+    search_query = request.GET.get('search', '')
+
+    filtered_tasks = base_tasks.select_related('project', 'assignee')
+
+    # Фильтр по проекту
+    if selected_project:
+        filtered_tasks = filtered_tasks.filter(project_id=selected_project)
+
+    # Фильтр по исполнителю
+    if selected_assignee:
+        filtered_tasks = filtered_tasks.filter(assignee_id=selected_assignee)
+
+    # Фильтр по приоритету
+    if selected_priority:
+        filtered_tasks = filtered_tasks.filter(priority=selected_priority)
+
+    # Поиск по названию
+    if search_query:
+        filtered_tasks = filtered_tasks.filter(title__icontains=search_query)
+
+    # Группируем задачи по статусам
     tasks_by_status = {
-        'todo': user_tasks.filter(status='todo').order_by('-priority', 'due_date'),
-        'in_progress': user_tasks.filter(status='in_progress').order_by('-priority', 'due_date'),
-        'review': user_tasks.filter(status='review').order_by('-priority', 'due_date'),
-        'done': user_tasks.filter(status='done').order_by('-updated_at')[:20],  # Показываем только последние 20
+        'todo': filtered_tasks.filter(status='todo').order_by('-priority', 'due_date'),
+        'in_progress': filtered_tasks.filter(status='in_progress').order_by('-priority', 'due_date'),
+        'review': filtered_tasks.filter(status='review').order_by('-priority', 'due_date'),
+        'done': filtered_tasks.filter(status='done').order_by('-updated_at')[:20],
     }
+
+    # Данные для фильтров
+    if request.user.is_superuser or request.user.profile.role == 'admin':
+        available_projects = Project.objects.all()
+        available_assignees = User.objects.filter(is_active=True)
+    else:
+        # Проекты где пользователь участник
+        available_projects = Project.objects.filter(
+            Q(members=request.user) | Q(tasks__assignee=request.user)
+        ).distinct()
+        # Коллеги из тех же проектов
+        user_projects = Project.objects.filter(
+            Q(members=request.user) | Q(tasks__assignee=request.user)
+        ).distinct()
+
+        available_assignees = User.objects.filter(
+            Q(projects__in=user_projects) | Q(assigned_tasks__project__in=user_projects)
+        ).distinct()
 
     context = {
         'tasks_by_status': tasks_by_status,
-        'total_tasks': user_tasks.count(),
+        'total_tasks': filtered_tasks.count(),
+        # Для фильтров
+        'available_projects': available_projects,
+        'available_assignees': available_assignees,
+        'selected_project': selected_project,
+        'selected_assignee': selected_assignee,
+        'selected_priority': selected_priority,
+        'search_query': search_query,
+        'priorities': [
+            ('low', 'Низкий'),
+            ('medium', 'Средний'),
+            ('high', 'Высокий'),
+            ('urgent', 'Срочный'),
+        ],
     }
 
     return render(request, 'tasks/kanban.html', context)
 
+def project_detail(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+
+    # Группируем задачи по статусам
+    tasks_by_status = {
+        'todo': project.tasks.filter(status='todo').count(),
+        'in_progress': project.tasks.filter(status='in_progress').count(),
+        'review': project.tasks.filter(status='review').count(),
+        'done': project.tasks.filter(status='done').count(),
+    }
+
+    context = {
+        'project': project,
+        'tasks_by_status': tasks_by_status,
+    }
+    return render(request, 'tasks/project_detail.html', context)
 
 @login_required
 @require_POST
@@ -526,7 +605,8 @@ def kanban_update_status(request):
 
         # Проверяем права доступа
         if task.assignee != request.user and request.user not in task.project.members.all():
-            return JsonResponse({'error': 'Permission denied'}, status=403)
+            if not (request.user.is_superuser or request.user.profile.role == 'admin'):
+                return JsonResponse({'error': 'Permission denied'}, status=403)
 
         # Обновляем статус
         task.status = new_status
@@ -541,21 +621,3 @@ def kanban_update_status(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
-
-def project_detail(request, pk):
-    project = get_object_or_404(Project, pk=pk)
-
-    # Группируем задачи по статусам
-    tasks_by_status = {
-        'todo': project.tasks.filter(status='todo').count(),
-        'in_progress': project.tasks.filter(status='in_progress').count(),
-        'review': project.tasks.filter(status='review').count(),
-        'done': project.tasks.filter(status='done').count(),
-    }
-
-    context = {
-        'project': project,
-        'tasks_by_status': tasks_by_status,
-    }
-    return render(request, 'tasks/project_detail.html', context)

@@ -196,42 +196,7 @@
 
     <script src="{% static 'js/main.js' %}"></script>
     {% block extra_js %}{% endblock %}
-  <script>
 
-    let timer;
-    let logoutTime = 3600000; // 1 час
-
-    function resetTimer(){
-        clearTimeout(timer);
-        timer = setTimeout(logoutUser, logoutTime);
-    }
-
-    function logoutUser(){
-        window.location.href="/logout/";
-    }
-
-    window.onload = resetTimer;
-    document.onmousemove = resetTimer;
-    document.onkeypress = resetTimer;
-
-
-    // ===== ОГРАНИЧЕНИЕ ОДНОЙ ВКЛАДКИ =====
-
-    const tabId = Date.now() + Math.random();
-
-    localStorage.setItem("activeTab", tabId);
-
-    window.addEventListener("storage", function(e) {
-        if (e.key === "activeTab" && e.newValue != tabId) {
-            window.location.href = "/logout/";
-        }
-    });
-
-    window.onbeforeunload = function() {
-        localStorage.removeItem("activeTab");
-    }
-
- </script>
 
 </body>
 </html>

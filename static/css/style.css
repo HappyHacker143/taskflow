@@ -971,9 +971,14 @@ body {
 }
 
 .member-avatar-sm {
-    width: 28px;
-    height: 28px;
-    font-size: 11px;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    border-radius: 50%;
+    text-align: center;
+    text-box: initial;
+    color: black;
+
 }
 
 .btn-full-card {
