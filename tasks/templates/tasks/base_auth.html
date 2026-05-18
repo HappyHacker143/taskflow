@@ -8,7 +8,17 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+<body>
+    <div class="page-background" aria-hidden="true">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+    </div>
     {% if messages %}
         <div class="toast-container" id="toastContainer">
             {% for message in messages %}

@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.db.models import Q
 from .models import Project, Task, TaskComment, Department, UserProfile
+from .permissions import editable_projects
 
 
 class ProjectForm(forms.ModelForm):
@@ -21,6 +23,45 @@ class ProjectForm(forms.ModelForm):
 
 
 class TaskForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if self.user:
+            project_queryset = editable_projects(self.user).prefetch_related('members')
+            self.fields['project'].queryset = project_queryset
+            project = self._selected_project(project_queryset)
+            if project:
+                self.fields['assignee'].queryset = User.objects.filter(Q(projects=project) | Q(pk=project.created_by_id), is_active=True).distinct().order_by('first_name', 'last_name')
+            else:
+                self.fields['assignee'].queryset = User.objects.filter(projects__in=project_queryset, is_active=True).distinct().order_by('first_name', 'last_name')
+            self.fields['assignee'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name} - {obj.profile.position or 'Сотрудник'}"
+            self.fields['assignee'].required = False
+
+    def _selected_project(self, project_queryset):
+        project_id = None
+        if self.is_bound:
+            project_id = self.data.get(self.add_prefix('project'))
+        elif self.instance and self.instance.pk:
+            project_id = self.instance.project_id
+        elif self.initial.get('project'):
+            project_id = self.initial.get('project')
+        if not project_id:
+            return None
+        try:
+            return project_queryset.get(pk=project_id)
+        except (Project.DoesNotExist, ValueError, TypeError):
+            return None
+
+    def clean(self):
+        cleaned_data = super().clean()
+        project = cleaned_data.get('project')
+        assignee = cleaned_data.get('assignee')
+        if self.user and project and not editable_projects(self.user).filter(pk=project.pk).exists():
+            self.add_error('project', 'У вас нет прав создавать или изменять задачи в этом проекте.')
+        if project and assignee and assignee.pk != project.created_by_id and not project.members.filter(pk=assignee.pk).exists():
+            self.add_error('assignee', 'Исполнитель должен быть участником выбранного проекта.')
+        return cleaned_data
+
     class Meta:
         model = Task
         fields = ['title', 'description', 'project', 'status', 'priority', 'assignee', 'due_date', 'tags']
@@ -35,25 +76,15 @@ class TaskForm(forms.ModelForm):
             'tags': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'frontend, urgent, api'}),
         }
 
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            from django.db.models import Q
-            self.fields['project'].queryset = Project.objects.filter(
-                Q(created_by=user) | Q(members=user)
-            ).distinct()
-            self.fields['assignee'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
-            self.fields['assignee'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name} - {obj.profile.position or 'Сотрудник'}"
-            self.fields['assignee'].required = False
 
 
 class CommentForm(forms.ModelForm):
     class Meta:
         model = TaskComment
-        fields = ['text']
+        fields = ['text', 'attachment']
         widgets = {
             'text': forms.Textarea(attrs={'class': 'form-input', 'rows': 2, 'placeholder': 'Напишите комментарий...'}),
+            'attachment': forms.FileInput(attrs={'class': 'form-input', 'accept': '.pdf,.png,.jpg,.jpeg,.webp,.txt,.docx'}),
         }
 
 

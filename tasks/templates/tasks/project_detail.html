@@ -13,8 +13,11 @@
         <p class="page-subtitle">{{ project.description|truncatewords:25 }}</p>
     </div>
     <div class="page-header-actions">
-        <a href="{% url 'task_create_in_project' project.pk %}" class="btn-primary">+ Задача</a>
-        <a href="{% url 'project_edit' project.pk %}" class="btn-ghost">Настройки</a>
+        <a href="{% url 'project_export_csv' project.pk %}" class="btn-ghost">Экспорт CSV</a>
+        {% if can_edit_current_project %}
+            <a href="{% url 'task_create_in_project' project.pk %}" class="btn-primary">+ Задача</a>
+            <a href="{% url 'project_edit' project.pk %}" class="btn-ghost">Настройки</a>
+        {% endif %}
     </div>
 </div>
 

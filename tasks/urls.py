@@ -1,22 +1,20 @@
 from django.urls import path
-from django.contrib import admin
-from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
+
 from . import views
 
 urlpatterns = [
     # Auth
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('api/tasks/estimate/', views.estimate_task_complexity, name='estimate_task'),  # отключено
+    path('api/tasks/estimate/', views.estimate_task_complexity, name='estimate_task'),
 
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
     path('', views.dashboard, name='home'),
     path('calendar/', views.calendar_view, name='calendar'),
     path('kanban/', views.kanban_view, name='kanban'),
-    path('kanban/update-status/', views.kanban_update_status, name='kanban_update_status'),  # отключено
+    path('kanban/update-status/', views.kanban_update_status, name='kanban_update_status'),
+    path('tasks/live/', views.live_tasks, name='live_tasks'),
 
     # Projects
     path('projects/', views.project_list, name='project_list'),
@@ -24,6 +22,7 @@ urlpatterns = [
     path('projects/<int:pk>/', views.project_detail, name='project_detail'),
     path('projects/<int:pk>/edit/', views.project_edit, name='project_edit'),
     path('projects/<int:pk>/delete/', views.project_delete, name='project_delete'),
+    path('projects/<int:pk>/export.csv', views.project_export_csv, name='project_export_csv'),
 
     # Tasks
     path('tasks/create/', views.task_create, name='task_create'),

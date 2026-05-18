@@ -1,27 +1,63 @@
 from datetime import datetime, timedelta
-from django.utils import timezone
 import calendar
-from django.db.models import Count, Q
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib import messages
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from django.db.models import Q, Count
-from django.contrib.auth.models import User
-from .models import Project, Task, TaskComment, Department, UserProfile
-from .forms import ProjectForm, TaskForm, CommentForm, UserCreateForm, UserEditForm
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from .ai_task_estimator import TaskComplexityEstimator
+import csv
 import json
+
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from .ai_task_estimator import TaskComplexityEstimator
+from .forms import CommentForm, ProjectForm, TaskForm, UserCreateForm, UserEditForm
+from .models import Department, Project, Task, TaskActivity
+from .permissions import (
+    can_edit_project,
+    can_edit_task,
+    editable_projects,
+    is_admin,
+    visible_projects,
+    visible_tasks,
+)
 
 # ─── HELPERS ─────────────────────────────────────────────
 
-def is_admin(user):
-    """Проверка, является ли пользователь администратором"""
-    return user.is_authenticated and (user.is_superuser or user.profile.role == 'admin')
+def get_visible_project_or_404(user, pk):
+    return get_object_or_404(visible_projects(user), pk=pk)
+
+
+def get_editable_project_or_404(user, pk):
+    project = get_object_or_404(editable_projects(user), pk=pk)
+    if not can_edit_project(user, project):
+        raise PermissionDenied
+    return project
+
+
+def get_visible_task_or_404(user, pk):
+    return get_object_or_404(visible_tasks(user).select_related('project', 'assignee', 'created_by'), pk=pk)
+
+
+def get_editable_task_or_404(user, pk):
+    task = get_object_or_404(visible_tasks(user).select_related('project', 'assignee', 'created_by'), pk=pk)
+    if not can_edit_task(user, task):
+        raise PermissionDenied
+    return task
+
+
+def log_task_activity(task, actor, action, description='', metadata=None):
+    TaskActivity.objects.create(
+        task=task,
+        actor=actor if actor.is_authenticated else None,
+        action=action,
+        description=description,
+        metadata=metadata or {},
+    )
 
 
 @login_required
@@ -29,7 +65,7 @@ def is_admin(user):
 def estimate_task_complexity(request):
     """AJAX endpoint для оценки сложности задачи"""
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body or '{}')
         title = data.get('title', '')
         description = data.get('description', '')
         tags = data.get('tags', '')
@@ -45,11 +81,14 @@ def estimate_task_complexity(request):
                 'success': True,
                 'estimation': result['estimation']
             })
-        else:
-            return JsonResponse({'error': 'Ошибка оценки'}, status=500)
+        return JsonResponse({'error': 'Ошибка оценки'}, status=500)
 
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Некорректный JSON'}, status=400)
+    except Exception:
+        return JsonResponse({'error': 'Не удалось оценить задачу'}, status=500)
+
+
 # ─── AUTH ────────────────────────────────────────────────
 
 def login_view(request):
@@ -76,10 +115,10 @@ def logout_view(request):
 @login_required
 def dashboard(request):
     # Проекты пользователя
-    user_projects = Project.objects.filter(members=request.user)
+    user_projects = visible_projects(request.user)
 
     # Задачи пользователя
-    user_tasks = Task.objects.filter(assignee=request.user).select_related('project')
+    user_tasks = visible_tasks(request.user).filter(assignee=request.user).select_related('project')
 
     # Базовая статистика
     total_tasks = user_tasks.count()
@@ -143,9 +182,9 @@ def dashboard(request):
     if request.user.is_superuser or request.user.profile.role in ['admin', 'manager']:
         from django.contrib.auth.models import User
         team_workload = User.objects.filter(
-            assigned_tasks__isnull=False
+            assigned_tasks__is_archived=False
         ).annotate(
-            active_tasks=Count('assigned_tasks', filter=Q(assigned_tasks__status__in=['todo', 'in_progress', 'review']))
+            active_tasks=Count('assigned_tasks', filter=Q(assigned_tasks__status__in=['todo', 'in_progress', 'review'], assigned_tasks__is_archived=False))
         ).order_by('-active_tasks')[:5]
 
     context = {
@@ -172,11 +211,17 @@ def dashboard(request):
 
 @login_required
 def project_list(request):
-    projects = Project.objects.filter(
-        Q(created_by=request.user) | Q(members=request.user)
-    ).distinct()
+    projects = list(visible_projects(request.user).annotate(
+        annotated_task_count=Count('tasks', filter=Q(tasks__is_archived=False), distinct=True),
+        annotated_completed_task_count=Count(
+            'tasks',
+            filter=Q(tasks__status='done', tasks__is_archived=False),
+            distinct=True,
+        ),
+    ).prefetch_related('members', 'members__profile'))
+    for project in projects:
+        project.can_edit_current_project = can_edit_project(request.user, project)
     return render(request, 'tasks/project_list.html', {'projects': projects})
-
 
 @login_required
 def project_create(request):
@@ -187,6 +232,7 @@ def project_create(request):
             project.created_by = request.user
             project.save()
             form.save_m2m()
+            project.members.add(request.user)
             messages.success(request, f'Проект "{project.name}" создан.')
             return redirect('project_detail', pk=project.pk)
     else:
@@ -196,15 +242,13 @@ def project_create(request):
 
 @login_required
 def project_detail(request, pk):
-    project = get_object_or_404(Project, pk=pk)
-    tasks = project.tasks.all()
+    project = get_visible_project_or_404(request.user, pk)
+    tasks = visible_tasks(request.user).filter(project=project).select_related('assignee', 'created_by')
 
-    # Filter by status
     status_filter = request.GET.get('status')
     if status_filter:
         tasks = tasks.filter(status=status_filter)
 
-    # Search
     search = request.GET.get('search', '').strip()
     if search:
         tasks = tasks.filter(
@@ -213,7 +257,6 @@ def project_detail(request, pk):
             Q(tags__icontains=search)
         )
 
-    # Group tasks by status for Kanban
     kanban = {
         'todo': tasks.filter(status='todo'),
         'in_progress': tasks.filter(status='in_progress'),
@@ -230,6 +273,7 @@ def project_detail(request, pk):
 
     context = {
         'project': project,
+        'can_edit_current_project': can_edit_project(request.user, project),
         'tasks': tasks,
         'kanban_dict': kanban,
         'kanban_columns': kanban_columns,
@@ -240,8 +284,29 @@ def project_detail(request, pk):
 
 
 @login_required
+def project_export_csv(request, pk):
+    project = get_visible_project_or_404(request.user, pk)
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="project-{project.pk}-tasks.csv"'
+    response.write('﻿')
+    writer = csv.writer(response)
+    writer.writerow(['Проект', project.name])
+    writer.writerow([])
+    writer.writerow(['Задача', 'Статус', 'Приоритет', 'Исполнитель', 'Дедлайн', 'Создана'])
+    for task in visible_tasks(request.user).filter(project=project).select_related('assignee').order_by('due_date', 'title'):
+        writer.writerow([
+            task.title,
+            task.get_status_display(),
+            task.get_priority_display(),
+            task.assignee.profile.display_name if task.assignee else 'Не назначено',
+            task.due_date.strftime('%d.%m.%Y') if task.due_date else '',
+            task.created_at.strftime('%d.%m.%Y %H:%M'),
+        ])
+    return response
+
+@login_required
 def project_edit(request, pk):
-    project = get_object_or_404(Project, pk=pk)
+    project = get_editable_project_or_404(request.user, pk)
     if request.method == 'POST':
         form = ProjectForm(request.POST, instance=project)
         if form.is_valid():
@@ -250,105 +315,130 @@ def project_edit(request, pk):
             return redirect('project_detail', pk=project.pk)
     else:
         form = ProjectForm(instance=project)
-        # Передаём initial members для правильного отображения
         form.initial['members'] = list(project.members.values_list('id', flat=True))
     return render(request, 'tasks/project_form.html', {'form': form, 'title': 'Редактировать проект'})
 
-
 @login_required
 def project_delete(request, pk):
-    project = get_object_or_404(Project, pk=pk)
+    project = get_editable_project_or_404(request.user, pk)
     if request.method == 'POST':
-        project.delete()
-        messages.success(request, 'Проект удалён.')
+        project.is_archived = True
+        project.tasks.update(is_archived=True)
+        project.save(update_fields=['is_archived', 'updated_at'])
+        messages.success(request, 'Проект перемещён в архив.')
         return redirect('project_list')
     return render(request, 'tasks/project_delete.html', {'project': project})
-
 
 # ─── TASKS ───────────────────────────────────────────────
 
 @login_required
 def task_create(request, project_pk=None):
+    initial = {}
+    if project_pk:
+        project = get_editable_project_or_404(request.user, project_pk)
+        initial['project'] = project.pk
+
     if request.method == 'POST':
         form = TaskForm(request.POST, user=request.user)
         if form.is_valid():
             task = form.save(commit=False)
             task.created_by = request.user
             task.save()
+            log_task_activity(task, request.user, TaskActivity.ACTION_TASK_CREATED, 'Задача создана')
             messages.success(request, f'Задача "{task.title}" создана.')
             return redirect('project_detail', pk=task.project.pk)
     else:
-        form = TaskForm(user=request.user)
-        if project_pk:
-            form.initial['project'] = project_pk
+        form = TaskForm(user=request.user, initial=initial)
     return render(request, 'tasks/task_form.html', {'form': form, 'title': 'Новая задача'})
-
 
 @login_required
 def task_detail(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    task = get_visible_task_or_404(request.user, pk)
     comments = task.comments.all().select_related('author', 'author__profile').order_by('created_at')
+    activities = task.activities.select_related('actor', 'actor__profile')[:20]
 
     if request.method == 'POST':
-        form = CommentForm(request.POST)
+        form = CommentForm(request.POST, request.FILES)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.task = task
             comment.author = request.user
             comment.save()
+            log_task_activity(task, request.user, TaskActivity.ACTION_COMMENT_ADDED, 'Комментарий добавлен')
             messages.success(request, 'Комментарий добавлен!')
-            return redirect('task_detail', pk=task.pk)  # ВАЖНО!
+            return redirect('task_detail', pk=task.pk)
     else:
         form = CommentForm()
 
     context = {
         'task': task,
         'comments': comments,
+        'activities': activities,
         'form': form,
+        'can_edit_current_task': can_edit_task(request.user, task),
     }
     return render(request, 'tasks/task_detail.html', context)
 
-
 @login_required
 def task_edit(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    task = get_editable_task_or_404(request.user, pk)
+    old_status = task.status
+    old_assignee_id = task.assignee_id
     if request.method == 'POST':
         form = TaskForm(request.POST, instance=task, user=request.user)
         if form.is_valid():
-            form.save()
+            task = form.save()
+            log_task_activity(task, request.user, TaskActivity.ACTION_TASK_UPDATED, 'Задача обновлена')
+            if old_status != task.status:
+                log_task_activity(
+                    task,
+                    request.user,
+                    TaskActivity.ACTION_STATUS_CHANGED,
+                    f'Статус изменён: {old_status} → {task.status}',
+                    {'from': old_status, 'to': task.status},
+                )
+            if old_assignee_id != task.assignee_id:
+                log_task_activity(
+                    task,
+                    request.user,
+                    TaskActivity.ACTION_ASSIGNEE_CHANGED,
+                    'Исполнитель изменён',
+                    {'from': old_assignee_id, 'to': task.assignee_id},
+                )
             messages.success(request, 'Задача обновлена.')
             return redirect('task_detail', pk=task.pk)
     else:
         form = TaskForm(instance=task, user=request.user)
     return render(request, 'tasks/task_form.html', {'form': form, 'title': 'Редактировать задачу'})
 
-
 @login_required
 def task_delete(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    task = get_editable_task_or_404(request.user, pk)
     project_pk = task.project.pk
     if request.method == 'POST':
-        task.delete()
-        messages.success(request, 'Задача удалена.')
+        task.is_archived = True
+        task.save(update_fields=['is_archived', 'updated_at'])
+        log_task_activity(task, request.user, TaskActivity.ACTION_TASK_ARCHIVED, 'Задача перемещена в архив')
+        messages.success(request, 'Задача перемещена в архив.')
         return redirect('project_detail', pk=project_pk)
     return render(request, 'tasks/task_delete.html', {'task': task})
-
 
 # ─── COMMENTS ────────────────────────────────────────────
 
 @login_required
 @require_POST
 def add_comment(request, task_pk):
-    task = get_object_or_404(Task, pk=task_pk)
-    text = request.POST.get('text', '').strip()
-    attachment = request.FILES.get('attachment')
-
-    if text or attachment:
-        comment = TaskComment(task=task, author=request.user, text=text)
-        if attachment:
-            comment.attachment = attachment
+    task = get_visible_task_or_404(request.user, task_pk)
+    form = CommentForm(request.POST, request.FILES)
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.task = task
+        comment.author = request.user
         comment.save()
-
+        log_task_activity(task, request.user, TaskActivity.ACTION_COMMENT_ADDED, 'Комментарий добавлен')
+        messages.success(request, 'Комментарий добавлен.')
+    else:
+        messages.error(request, 'Комментарий не сохранён. Проверьте текст или вложение.')
     return redirect('task_detail', pk=task.pk)
 
 
@@ -357,20 +447,29 @@ def add_comment(request, task_pk):
 @login_required
 @require_POST
 def task_update_status(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    task = get_editable_task_or_404(request.user, pk)
+    old_status = task.status
     new_status = request.POST.get('status')
     if new_status in dict(Task.STATUS_CHOICES):
         task.status = new_status
-        task.save()
-        return JsonResponse({'success': True, 'status': new_status})
-    return JsonResponse({'success': False}, status=400)
+        task.save(update_fields=['status', 'updated_at'])
+        if old_status != new_status:
+            log_task_activity(
+                task,
+                request.user,
+                TaskActivity.ACTION_STATUS_CHANGED,
+                f'Статус изменён: {old_status} → {new_status}',
+                {'from': old_status, 'to': new_status},
+            )
+        return JsonResponse({'success': True, 'status': new_status, 'status_display': task.get_status_display()})
+    return JsonResponse({'success': False, 'error': 'Некорректный статус'}, status=400)
 
 
 # ─── ALL TASKS (my tasks view) ───────────────────────────
 
 @login_required
 def my_tasks(request):
-    tasks = Task.objects.filter(assignee=request.user)
+    tasks = visible_tasks(request.user).filter(assignee=request.user).select_related('project')
     status_filter = request.GET.get('status')
     if status_filter:
         tasks = tasks.filter(status=status_filter)
@@ -381,7 +480,6 @@ def my_tasks(request):
             Q(description__icontains=search)
         )
     return render(request, 'tasks/my_tasks.html', {'tasks': tasks, 'status_filter': status_filter, 'search': search})
-
 
 # ─── USER MANAGEMENT (ADMIN ONLY) ───────────────────────
 
@@ -481,22 +579,17 @@ def department_list(request):
 
 @login_required
 def calendar_view(request):
-    # Получаем текущую дату или дату из параметра
     year = int(request.GET.get('year', timezone.now().year))
     month = int(request.GET.get('month', timezone.now().month))
 
-    # Создаём календарь
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
 
-    # Получаем ВСЕ задачи пользователя с дедлайнами
-    # Не группируем - просто передаём список
-    user_tasks = Task.objects.filter(
+    user_tasks = visible_tasks(request.user).filter(
         assignee=request.user,
-        due_date__isnull=False
+        due_date__isnull=False,
     ).select_related('project')
 
-    # Предыдущий и следующий месяц
     prev_month = month - 1 if month > 1 else 12
     prev_year = year if month > 1 else year - 1
     next_month = month + 1 if month < 12 else 1
@@ -507,7 +600,7 @@ def calendar_view(request):
         'year': year,
         'month': month,
         'month_name': month_name,
-        'user_tasks': user_tasks,  # Просто список задач
+        'user_tasks': user_tasks,
         'prev_month': prev_month,
         'prev_year': prev_year,
         'next_month': next_month,
@@ -518,46 +611,25 @@ def calendar_view(request):
     return render(request, 'tasks/calendar.html', context)
 
 
-# ДОБАВЬТЕ/ЗАМЕНИТЕ в tasks/views.py
-
 @login_required
 def kanban_view(request):
     """Kanban доска с фильтрами"""
-
-    # ИСПРАВЛЕНИЕ: Admin видит ВСЕ задачи
-    if request.user.is_superuser or request.user.profile.role == 'admin':
-        base_tasks = Task.objects.all()
-    else:
-        # Обычные пользователи видят свои задачи
-        base_tasks = Task.objects.filter(
-            Q(assignee=request.user) | Q(project__members=request.user)
-        ).distinct()
-
-    # Применяем фильтры
     selected_project = request.GET.get('project', '')
     selected_assignee = request.GET.get('assignee', '')
     selected_priority = request.GET.get('priority', '')
-    search_query = request.GET.get('search', '')
+    search_query = request.GET.get('search', '').strip()
 
-    filtered_tasks = base_tasks.select_related('project', 'assignee')
+    filtered_tasks = visible_tasks(request.user).select_related('project', 'assignee', 'assignee__profile')
 
-    # Фильтр по проекту
     if selected_project:
         filtered_tasks = filtered_tasks.filter(project_id=selected_project)
-
-    # Фильтр по исполнителю
     if selected_assignee:
         filtered_tasks = filtered_tasks.filter(assignee_id=selected_assignee)
-
-    # Фильтр по приоритету
     if selected_priority:
         filtered_tasks = filtered_tasks.filter(priority=selected_priority)
-
-    # Поиск по названию
     if search_query:
         filtered_tasks = filtered_tasks.filter(title__icontains=search_query)
 
-    # Группируем задачи по статусам
     tasks_by_status = {
         'todo': filtered_tasks.filter(status='todo').order_by('-priority', 'due_date'),
         'in_progress': filtered_tasks.filter(status='in_progress').order_by('-priority', 'due_date'),
@@ -565,28 +637,15 @@ def kanban_view(request):
         'done': filtered_tasks.filter(status='done').order_by('-updated_at')[:20],
     }
 
-    # Данные для фильтров
-    if request.user.is_superuser or request.user.profile.role == 'admin':
-        available_projects = Project.objects.all()
-        available_assignees = User.objects.filter(is_active=True)
-    else:
-        # Проекты где пользователь участник
-        available_projects = Project.objects.filter(
-            Q(members=request.user) | Q(tasks__assignee=request.user)
-        ).distinct()
-        # Коллеги из тех же проектов
-        user_projects = Project.objects.filter(
-            Q(members=request.user) | Q(tasks__assignee=request.user)
-        ).distinct()
-
-        available_assignees = User.objects.filter(
-            Q(projects__in=user_projects) | Q(assigned_tasks__project__in=user_projects)
-        ).distinct()
+    available_projects = visible_projects(request.user).distinct()
+    available_assignees = User.objects.filter(
+        Q(projects__in=available_projects) | Q(assigned_tasks__project__in=available_projects),
+        is_active=True,
+    ).select_related('profile').distinct().order_by('first_name', 'last_name')
 
     context = {
         'tasks_by_status': tasks_by_status,
         'total_tasks': filtered_tasks.count(),
-        # Для фильтров
         'available_projects': available_projects,
         'available_assignees': available_assignees,
         'selected_project': selected_project,
@@ -604,40 +663,61 @@ def kanban_view(request):
     return render(request, 'tasks/kanban.html', context)
 
 
-
 @login_required
 @require_POST
 def kanban_update_status(request):
-    """AJAX endpoint для обновления статуса задачи"""
+    """AJAX endpoint для обновления статуса задачи из JSON-запроса"""
     try:
-        data = json.loads(request.body)
-        task_id = data.get('task_id')
-        new_status = data.get('status')
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Некорректный JSON'}, status=400)
 
-        # Проверяем что статус валидный
-        valid_statuses = ['todo', 'in_progress', 'review', 'done']
-        if new_status not in valid_statuses:
-            return JsonResponse({'error': 'Invalid status'}, status=400)
+    task_id = data.get('task_id')
+    new_status = data.get('status')
+    if new_status not in dict(Task.STATUS_CHOICES):
+        return JsonResponse({'success': False, 'error': 'Некорректный статус'}, status=400)
 
-        # Получаем задачу
-        task = get_object_or_404(Task, pk=task_id)
+    task = get_editable_task_or_404(request.user, task_id)
+    old_status = task.status
+    task.status = new_status
+    task.save(update_fields=['status', 'updated_at'])
+    if old_status != new_status:
+        log_task_activity(
+            task,
+            request.user,
+            TaskActivity.ACTION_STATUS_CHANGED,
+            f'Статус изменён: {old_status} → {new_status}',
+            {'from': old_status, 'to': new_status},
+        )
 
-        # Проверяем права доступа
-        if task.assignee != request.user and request.user not in task.project.members.all():
-            if not (request.user.is_superuser or request.user.profile.role == 'admin'):
-                return JsonResponse({'error': 'Permission denied'}, status=403)
+    return JsonResponse({
+        'success': True,
+        'task_id': task.id,
+        'new_status': new_status,
+        'status_display': task.get_status_display(),
+    })
 
-        # Обновляем статус
-        task.status = new_status
-        task.save()
 
-        return JsonResponse({
-            'success': True,
-            'task_id': task.id,
-            'new_status': new_status,
-            'status_display': task.get_status_display()
-        })
+@login_required
+def live_tasks(request):
+    """Лёгкий polling endpoint для синхронизации статусов задач на открытых досках."""
+    updated_after = request.GET.get('updated_after')
+    tasks = visible_tasks(request.user).select_related('project')
+    if updated_after:
+        try:
+            parsed = datetime.fromisoformat(updated_after.replace('Z', '+00:00'))
+            tasks = tasks.filter(updated_at__gt=parsed)
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Некорректная дата'}, status=400)
 
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
+    payload = [
+        {
+            'id': task.id,
+            'status': task.status,
+            'status_display': task.get_status_display(),
+            'project_id': task.project_id,
+            'updated_at': task.updated_at.isoformat(),
+        }
+        for task in tasks.order_by('-updated_at')[:100]
+    ]
+    return JsonResponse({'success': True, 'tasks': payload, 'server_time': timezone.now().isoformat()})

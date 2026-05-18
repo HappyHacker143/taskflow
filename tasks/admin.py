@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Project, Task, TaskComment, Department, UserProfile
+from .models import Project, Task, TaskActivity, TaskComment, Department, UserProfile
 
 
 @admin.register(Department)
@@ -17,15 +17,15 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['name', 'created_by', 'task_count', 'created_at']
-    list_filter = ['created_at']
+    list_display = ['name', 'created_by', 'task_count', 'is_archived', 'created_at']
+    list_filter = ['is_archived', 'created_at']
     search_fields = ['name', 'description']
 
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ['title', 'project', 'status', 'priority', 'assignee', 'due_date', 'created_at']
-    list_filter = ['status', 'priority', 'project', 'due_date']
+    list_display = ['title', 'project', 'status', 'priority', 'assignee', 'due_date', 'is_archived', 'created_at']
+    list_filter = ['status', 'priority', 'project', 'due_date', 'is_archived']
     search_fields = ['title', 'description', 'tags']
     ordering = ['-created_at']
 
@@ -34,3 +34,11 @@ class TaskAdmin(admin.ModelAdmin):
 class TaskCommentAdmin(admin.ModelAdmin):
     list_display = ['task', 'author', 'created_at']
     list_filter = ['created_at']
+
+
+@admin.register(TaskActivity)
+class TaskActivityAdmin(admin.ModelAdmin):
+    list_display = ['task', 'actor', 'action', 'created_at']
+    list_filter = ['action', 'created_at']
+    search_fields = ['task__title', 'description', 'actor__username']
+    readonly_fields = ['task', 'actor', 'action', 'description', 'metadata', 'created_at']
