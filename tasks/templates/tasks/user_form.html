@@ -2,14 +2,120 @@
 {% block title %}{{ title }} — TaskFlow{% endblock %}
 {% block content %}
 
+<style>
+.avatar-block {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: var(--clr-bg);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 8px;
+}
+
+.avatar-block img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--clr-accent);
+    flex-shrink: 0;
+    background: var(--clr-surface);
+}
+
+.avatar-block-right h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.avatar-block-right p {
+    font-size: 13px;
+    color: var(--clr-text-muted);
+    margin-bottom: 12px;
+}
+
+.avatar-block-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-upload {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: rgba(99,102,241,0.12);
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 8px;
+    color: var(--clr-accent);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn-upload:hover { background: rgba(99,102,241,0.22); }
+.btn-upload input { display: none; }
+
+.btn-remove-avatar {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: transparent;
+    border: 1px solid var(--clr-border);
+    border-radius: 8px;
+    color: var(--clr-text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.btn-remove-avatar:hover { border-color: #ef4444; color: #ef4444; }
+</style>
+
 <div class="page-header">
     <h1 class="page-title">{{ title }}</h1>
 </div>
 
 <div class="form-page">
-    <form method="post" class="form-card">
+    <form method="post" class="form-card" enctype="multipart/form-data">
         {% csrf_token %}
-        
+
+        <!-- ── АВАТАР ─────────────────────────────── -->
+        {% if form.instance.pk %}
+        <h3 class="form-section-title">Фото профиля</h3>
+        <div class="avatar-block">
+            <img id="avatarPreview"
+                 src="{{ form.instance.profile.avatar_url }}"
+                 alt="Аватар"
+                 onerror="this.src='{{ form.instance.profile.avatar_svg }}'">
+            <div class="avatar-block-right">
+                <h4>Загрузить фото</h4>
+                <p>JPG, PNG или WebP · до 5 МБ</p>
+                <div class="avatar-block-btns">
+                    <label class="btn-upload">
+                        ↑ Выбрать файл
+                        <input type="file" name="avatar" id="avatarInput"
+                               accept="image/jpeg,image/png,image/webp,image/gif"
+                               onchange="previewAvatar(this)">
+                    </label>
+                    {% if form.instance.profile.avatar %}
+                    <button type="button" class="btn-remove-avatar" onclick="removeAvatar()">
+                        ✕ Удалить фото
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- скрытые поля формы для аватара -->
+        {{ form.avatar.as_hidden }}
+        <input type="hidden" name="clear_avatar" id="clearAvatarField" value="">
+        {% endif %}
+
+        <!-- ── ОСНОВНАЯ ИНФОРМАЦИЯ ────────────────── -->
         <h3 class="form-section-title">Основная информация</h3>
         <div class="form-row">
             <div class="form-group">
@@ -21,7 +127,7 @@
                 {{ form.last_name }}
             </div>
         </div>
-        
+
         {% if form.username %}
         <div class="form-row">
             <div class="form-group">
@@ -39,7 +145,7 @@
             {{ form.email }}
         </div>
         {% endif %}
-        
+
         {% if form.password1 %}
         <h3 class="form-section-title">Пароль</h3>
         <div class="form-row">
@@ -53,7 +159,8 @@
             </div>
         </div>
         {% endif %}
-        
+
+        <!-- ── ДОЛЖНОСТЬ ──────────────────────────── -->
         <h3 class="form-section-title">Информация о должности</h3>
         <div class="form-row">
             <div class="form-group">
@@ -65,7 +172,7 @@
                 {{ form.position }}
             </div>
         </div>
-        
+
         <div class="form-row">
             <div class="form-group">
                 <label>Роль в системе *</label>
@@ -77,7 +184,7 @@
                 {{ form.phone }}
             </div>
         </div>
-        
+
         {% if form.is_active %}
         <div class="form-group">
             <label class="checkbox-label">
@@ -86,7 +193,7 @@
             </label>
         </div>
         {% endif %}
-        
+
         {% if form.errors %}
         <div class="form-errors">
             {% for field in form %}
@@ -99,12 +206,36 @@
             {% endfor %}
         </div>
         {% endif %}
-        
+
         <div class="form-actions">
             <button type="submit" class="btn-primary">Сохранить</button>
             <a href="{% url 'user_list' %}" class="btn-ghost">Отмена</a>
         </div>
     </form>
 </div>
+
+<script>
+// Превью выбранного фото
+function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('avatarPreview').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+        // Сбрасываем флаг удаления
+        document.getElementById('clearAvatarField').value = '';
+    }
+}
+
+// Удалить аватар
+function removeAvatar() {
+    document.getElementById('clearAvatarField').value = '1';
+    document.getElementById('avatarInput').value = '';
+    // Показываем заглушку
+    document.getElementById('avatarPreview').src =
+        'https://api.dicebear.com/9.x/avataaars/svg?seed=empty&radius=50';
+}
+</script>
 
 {% endblock %}

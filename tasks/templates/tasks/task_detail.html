@@ -1,6 +1,330 @@
 {% extends "tasks/base.html" %}
 {% block title %}{{ task.title }} — TaskFlow{% endblock %}
+
 {% block content %}
+
+<style>
+/* ─── АВАТАРЫ ──────────────────────────────────────────── */
+.avatar-circle {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 2px solid var(--clr-border);
+}
+.avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+}
+.avatar-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-width: 1px;
+}
+
+/* ─── КОММЕНТАРИИ ──────────────────────────────────────── */
+.comments-section { margin-top: 32px; }
+.comments-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--clr-text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.comments-title .comments-count {
+    background: var(--clr-accent);
+    color: white;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 13px;
+}
+.comment {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 20px;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.comment-body {
+    flex: 1;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.comment-author { font-weight: 600; font-size: 14px; color: var(--clr-text); }
+.comment-date   { font-size: 12px; color: var(--clr-text-muted); margin-left: auto; }
+.comment-text   { font-size: 14px; color: var(--clr-text); line-height: 1.6; margin: 0; white-space: pre-wrap; }
+
+/* ─── ВЛОЖЕНИЯ ─────────────────────────────────────────── */
+.comment-attachment {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--clr-border);
+}
+
+/* Картинка */
+.attachment-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    cursor: zoom-in;
+    transition: opacity 0.2s;
+    display: block;
+}
+.attachment-image:hover { opacity: 0.85; }
+
+/* PDF — карточка с кнопками */
+.pdf-card {
+    border: 1px solid var(--clr-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--clr-bg);
+}
+.pdf-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--clr-surface);
+    border-bottom: 1px solid var(--clr-border);
+}
+.pdf-icon {
+    width: 34px;
+    height: 34px;
+    background: rgba(239,68,68,0.12);
+    color: #ef4444;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+}
+.pdf-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--clr-text);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pdf-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-sm-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--clr-border);
+    color: var(--clr-text);
+    background: var(--clr-bg);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.btn-sm-action:hover {
+    border-color: var(--clr-accent);
+    color: var(--clr-accent);
+}
+.btn-sm-action.primary {
+    background: var(--clr-accent);
+    border-color: var(--clr-accent);
+    color: white;
+}
+.btn-sm-action.primary:hover {
+    opacity: 0.85;
+    color: white;
+}
+
+/* PDF preview область */
+.pdf-preview-area {
+    padding: 16px;
+}
+.pdf-preview-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px 20px;
+    border: 2px dashed var(--clr-border);
+    border-radius: 8px;
+    text-align: center;
+    color: var(--clr-text-muted);
+    font-size: 14px;
+}
+.pdf-preview-hint .pdf-big-icon {
+    font-size: 48px;
+    opacity: 0.5;
+}
+
+/* Файл-карточка */
+.file-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--clr-bg);
+    border: 1px solid var(--clr-border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--clr-text);
+    transition: var(--transition);
+}
+.file-card:hover { border-color: var(--clr-accent); transform: translateY(-1px); }
+.file-card-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+}
+.icon-doc  { background: rgba(59,130,246,0.12); }
+.icon-xls  { background: rgba(16,185,129,0.12); }
+.icon-ppt  { background: rgba(245,158,11,0.12); }
+.icon-txt  { background: rgba(148,163,184,0.12); }
+.icon-file { background: rgba(99,102,241,0.12); }
+.file-card-info { flex: 1; overflow: hidden; }
+.file-card-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-card-type { font-size: 11px; color: var(--clr-text-muted); text-transform: uppercase; margin-top: 2px; }
+
+/* ─── ФОРМА КОММЕНТАРИЯ ────────────────────────────────── */
+.comment-form-wrapper {
+    display: flex;
+    gap: 14px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--clr-border);
+}
+.comment-form-inner {
+    flex: 1;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.comment-form-inner:focus-within {
+    border-color: var(--clr-accent);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+}
+.comment-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 14px 16px;
+    background: transparent;
+    border: none;
+    resize: vertical;
+    font-size: 14px;
+    color: var(--clr-text);
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+}
+.comment-textarea::placeholder { color: var(--clr-text-muted); }
+.comment-form-footer {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    border-top: 1px solid var(--clr-border);
+    background: var(--clr-bg);
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.attach-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--clr-border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--clr-text-muted);
+    transition: var(--transition);
+    user-select: none;
+}
+.attach-label:hover { border-color: var(--clr-accent); color: var(--clr-accent); }
+.attach-label input { display: none; }
+.file-chip {
+    display: none;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.25);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--clr-accent);
+    max-width: 180px;
+}
+.file-chip.visible { display: inline-flex; }
+.file-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-chip-remove { background: none; border: none; cursor: pointer; color: var(--clr-accent); padding: 0; font-size: 14px; line-height: 1; flex-shrink: 0; }
+
+/* ─── ЛАЙТБОКС ─────────────────────────────────────────── */
+.lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    cursor: zoom-out;
+}
+.lightbox.open { display: flex; }
+.lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 10px;
+    object-fit: contain;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+.lightbox-close {
+    position: absolute;
+    top: 16px; right: 20px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    font-size: 22px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+</style>
 
 <div class="page-header">
     <div class="breadcrumb">
@@ -11,7 +335,7 @@
 </div>
 
 <div class="task-detail-layout">
-    <!-- MAIN INFO -->
+
     <div class="task-detail-main">
         <div class="task-detail-header">
             <div class="task-detail-title-row">
@@ -24,70 +348,176 @@
         </div>
 
         {% if task.description %}
-        <div class="task-detail-description">
-            <p>{{ task.description }}</p>
-        </div>
+        <div class="task-detail-description"><p>{{ task.description }}</p></div>
         {% endif %}
 
         {% if task.tag_list %}
         <div class="task-detail-tags">
-            {% for tag in task.tag_list %}
-                <span class="tag tag-lg">{{ tag }}</span>
-            {% endfor %}
+            {% for tag in task.tag_list %}<span class="tag tag-lg">{{ tag }}</span>{% endfor %}
         </div>
         {% endif %}
 
-        <!-- EMPLOYEE CHAT -->
-        <div class="task-chat-section">
-            <h3 class="task-chat-title">💬 Обсуждение задачи ({{ task.comments.count }})</h3>
+        <!-- ─── КОММЕНТАРИИ ─────────────── -->
+        <div class="comments-section">
+            <h3 class="comments-title">
+                Комментарии
+                <span class="comments-count">{{ comments|length }}</span>
+            </h3>
 
-            <div class="task-chat-messages" id="chatMessages">
-                {% for comment in task.comments.all %}
-                <div class="chat-message {% if comment.author == request.user %}chat-message-own{% endif %}">
-                    <div class="chat-avatar" style="background: {{ comment.author.profile.avatar_color }}">
-                        {{ comment.author.profile.initials }}
-                    </div>
-                    <div class="chat-bubble">
-                        <div class="chat-author">{{ comment.author.get_full_name }}</div>
-                        <div class="chat-text">{{ comment.text }}</div>
-                        <div class="chat-time">{{ comment.created_at|date:"d.m.Y H:i" }}</div>
-                    </div>
+            <div class="comments-list">
+            {% for comment in comments %}
+            <div class="comment">
+                <div class="avatar-circle">
+                    <img src="{{ comment.author.profile.avatar_url }}"
+                        onerror="this.src='{{ comment.author.profile.avatar_svg }}'">
                 </div>
-                {% empty %}
-                <div class="chat-empty">
-                    <p>💬 Пока нет сообщений. Начните обсуждение!</p>
+
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <strong class="comment-author">{{ comment.author.profile.display_name }}</strong>
+                        <span class="comment-date">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+
+                    {% if comment.text %}
+                    <p class="comment-text">{{ comment.text }}</p>
+                    {% endif %}
+
+                    {% if comment.attachment %}
+                    <div class="comment-attachment">
+
+                        {% if comment.is_image %}
+                        <!-- КАРТИНКА → лайтбокс -->
+                        <img src="{{ comment.attachment.url }}"
+                             alt="{{ comment.attachment_name }}"
+                             class="attachment-image"
+                             onclick="openLightbox('{{ comment.attachment.url }}')"
+                             title="Нажмите для увеличения">
+
+                        {% elif comment.is_pdf %}
+                        <!-- PDF → карточка с кнопками (открыть/скачать) -->
+                        <div class="pdf-card">
+                            <div class="pdf-card-header">
+                                <div class="pdf-icon">📄</div>
+                                <span class="pdf-name">{{ comment.attachment_name }}</span>
+                                <div class="pdf-actions">
+                                    <a href="{{ comment.attachment.url }}"
+                                       target="_blank"
+                                       class="btn-sm-action primary">
+                                        ↗ Открыть
+                                    </a>
+                                    <a href="{{ comment.attachment.url }}"
+                                       download
+                                       class="btn-sm-action">
+                                        ↓ Скачать
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="pdf-preview-area">
+                                <div class="pdf-preview-hint">
+                                    <div class="pdf-big-icon">📄</div>
+                                    <div>
+                                        <strong>{{ comment.attachment_name }}</strong><br>
+                                        <span>Нажмите <strong>↗ Открыть</strong> для просмотра PDF в браузере</span>
+                                    </div>
+                                    <a href="{{ comment.attachment.url }}"
+                                       target="_blank"
+                                       class="btn-sm-action primary"
+                                       style="margin-top:4px;">
+                                        ↗ Открыть PDF
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% else %}
+                        <!-- ДОКУМЕНТ → карточка скачивания -->
+                        <a href="{{ comment.attachment.url }}" download class="file-card">
+                            <div class="file-card-icon
+                                {% if comment.attachment_ext in 'doc,docx' %}icon-doc
+                                {% elif comment.attachment_ext in 'xls,xlsx' %}icon-xls
+                                {% elif comment.attachment_ext in 'ppt,pptx' %}icon-ppt
+                                {% elif comment.attachment_ext == 'txt' %}icon-txt
+                                {% else %}icon-file{% endif %}">
+                                {% if comment.attachment_ext in 'doc,docx' %}📝
+                                {% elif comment.attachment_ext in 'xls,xlsx' %}📊
+                                {% elif comment.attachment_ext in 'ppt,pptx' %}📋
+                                {% elif comment.attachment_ext == 'txt' %}📃
+                                {% else %}📎{% endif %}
+                            </div>
+                            <div class="file-card-info">
+                                <div class="file-card-name">{{ comment.attachment_name }}</div>
+                                <div class="file-card-type">{{ comment.attachment_ext }} — нажмите чтобы скачать</div>
+                            </div>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2"
+                                 style="color:var(--clr-accent); flex-shrink:0;">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                        </a>
+                        {% endif %}
+
+                    </div>
+                    {% endif %}
+
                 </div>
-                {% endfor %}
+            </div>
+            {% empty %}
+            <p style="color:var(--clr-text-muted); font-size:14px; padding:16px 0 8px;">
+                Пока комментариев нет. Будьте первым!
+            </p>
+            {% endfor %}
             </div>
 
-            <form method="post" action="{% url 'add_comment' task.pk %}" class="task-chat-form" id="chatForm">
-                {% csrf_token %}
-                <div class="chat-input-wrapper">
-                    <textarea
-                        name="text"
-                        id="chatInput"
-                        placeholder="Напишите сообщение..."
-                        rows="2"
-                        required
-                    ></textarea>
-                    <button type="submit" class="chat-send-btn">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                        Отправить
-                    </button>
+            <!-- ─── ФОРМА ─────────────────── -->
+            <div class="comment-form-wrapper">
+                <div class="avatar-circle">
+                    <img src="{{ request.user.profile.avatar_url }}"
+                        onerror="this.src='{{ request.user.profile.avatar_svg }}'">
                 </div>
-            </form>
+
+                <form method="post"
+                      action="{% url 'add_comment' task.pk %}"
+                      enctype="multipart/form-data"
+                      class="comment-form-inner"
+                      id="commentForm">
+                    {% csrf_token %}
+
+                    <textarea name="text"
+                              class="comment-textarea"
+                              placeholder="Написать комментарий… (Ctrl+Enter для отправки)"
+                              id="commentText"></textarea>
+
+                    <div class="comment-form-footer">
+                        <label class="attach-label">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2">
+                                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+                            </svg>
+                            Прикрепить файл
+                            <input type="file" name="attachment" id="fileInput"
+                                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                                   onchange="onFileChange(this)">
+                        </label>
+
+                        <div class="file-chip" id="fileChip">
+                            <span class="file-chip-name" id="fileChipName"></span>
+                            <button type="button" class="file-chip-remove" onclick="clearFile()">✕</button>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm"
+                                style="margin-left:auto;">
+                            Отправить
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-
-    <!-- SIDEBAR INFO -->
+    <!-- ─── САЙДБАР ─── -->
     <aside class="task-detail-sidebar">
         <div class="task-detail-meta-card">
             <h4>Детали задачи</h4>
-
             <div class="meta-item">
                 <span class="meta-label">Статус</span>
                 <span class="meta-value">
@@ -102,29 +532,42 @@
             </div>
             <div class="meta-item">
                 <span class="meta-label">Проект</span>
-                <span class="meta-value"><a href="{% url 'project_detail' task.project.pk %}" class="meta-link">{{ task.project.name }}</a></span>
+                <span class="meta-value">
+                    <a href="{% url 'project_detail' task.project.pk %}" class="meta-link">{{ task.project.name }}</a>
+                </span>
             </div>
             <div class="meta-item">
                 <span class="meta-label">Исполнитель</span>
                 <span class="meta-value">
                     {% if task.assignee %}
-                        <div class="meta-assignee">
-                            <div class="member-avatar member-avatar-xs" style="background: {{ task.assignee.profile.avatar_color }}">{{ task.assignee.profile.initials }}</div>
-                            {{ task.assignee.profile.display_name }}
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="avatar-circle avatar-sm">
+                            <img src="{{ task.assignee.profile.avatar_url }}"
+                                onerror="this.src='{{ task.assignee.profile.avatar_svg }}'">
                         </div>
-                    {% else %}
-                        <em class="text-muted">Не назначено</em>
-                    {% endif %}
+                        {{ task.assignee.profile.display_name }}
+                    </div>
+                    {% else %}<em class="text-muted">Не назначено</em>{% endif %}
                 </span>
             </div>
             <div class="meta-item">
                 <span class="meta-label">Создатель</span>
-                <span class="meta-value">{{ task.created_by.profile.display_name }}</span>
+                <span class="meta-value">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="avatar-circle avatar-sm">
+                            <img src="{{ task.created_by.profile.avatar_url }}"
+                                onerror="this.src='{{ task.created_by.profile.avatar_svg }}'">
+                        </div>
+                        {{ task.created_by.profile.display_name }}
+                    </div>
+                </span>
             </div>
             {% if task.due_date %}
             <div class="meta-item">
                 <span class="meta-label">Дата окончания</span>
-                <span class="meta-value {% if task.is_overdue %}text-danger{% endif %}">{{ task.due_date|date:"d.m.Y" }}</span>
+                <span class="meta-value {% if task.is_overdue %}text-danger{% endif %}">
+                    {{ task.due_date|date:"d.m.Y" }}
+                </span>
             </div>
             {% endif %}
             <div class="meta-item">
@@ -137,7 +580,6 @@
             </div>
         </div>
 
-        <!-- ACTIONS -->
         <div class="task-detail-actions">
             <a href="{% url 'task_edit' task.pk %}" class="btn-primary btn-full-card">✎ Редактировать</a>
             <a href="{% url 'task_delete' task.pk %}" class="btn-danger btn-full-card">✕ Удалить</a>
@@ -145,55 +587,39 @@
     </aside>
 </div>
 
-{% endblock %}
+<!-- ЛАЙТБОКС -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img id="lightboxImg" src="" alt="">
+</div>
 
-{% block extra_js %}
 <script>
-// Auto-scroll to latest message
-document.addEventListener('DOMContentLoaded', function() {
-    const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+function openLightbox(url) {
+    document.getElementById('lightboxImg').src = url;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-    // Auto-resize textarea
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) {
-        chatInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
-
-        // Submit on Enter (Shift+Enter for new line)
-        chatInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                document.getElementById('chatForm').submit();
-            }
-        });
+function onFileChange(input) {
+    if (input.files && input.files[0]) {
+        const name = input.files[0].name;
+        document.getElementById('fileChipName').textContent =
+            name.length > 22 ? name.slice(0,19) + '...' : name;
+        document.getElementById('fileChip').classList.add('visible');
     }
+}
+function clearFile() {
+    document.getElementById('fileInput').value = '';
+    document.getElementById('fileChip').classList.remove('visible');
+}
+document.getElementById('commentText').addEventListener('keydown', e => {
+    if (e.ctrlKey && e.key === 'Enter') document.getElementById('commentForm').submit();
 });
-
-// Auto-reload comments every 10 seconds
-setInterval(function() {
-    fetch(window.location.href)
-        .then(response => response.text())
-        .then(html => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const newMessages = doc.querySelector('#chatMessages');
-            const currentMessages = document.getElementById('chatMessages');
-
-            if (newMessages && currentMessages) {
-                const wasScrolledToBottom = currentMessages.scrollHeight - currentMessages.scrollTop === currentMessages.clientHeight;
-                currentMessages.innerHTML = newMessages.innerHTML;
-
-                if (wasScrolledToBottom) {
-                    currentMessages.scrollTop = currentMessages.scrollHeight;
-                }
-            }
-        })
-        .catch(error => console.error('Error loading messages:', error));
-}, 10000);
 </script>
+
 {% endblock %}

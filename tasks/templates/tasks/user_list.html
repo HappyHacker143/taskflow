@@ -44,9 +44,10 @@
             <tr>
                 <td>
                     <div class="user-cell">
-                        <div class="member-avatar member-avatar-sm" style="background: {{ user.profile.avatar_color }}">
-                            {{ user.profile.initials }}
-                        </div>
+                        <img src="{{ user.profile.avatar_url }}"
+                             class="member-avatar member-avatar-sm"
+                             alt="{{ user.profile.initials }}"
+                             onerror="this.src='{{ user.profile.avatar_svg }}'">
                         <span class="user-cell-name">{{ user.profile.display_name }}</span>
                     </div>
                 </td>

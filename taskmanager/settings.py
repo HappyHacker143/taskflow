@@ -1,5 +1,9 @@
+# settings.py - ПРАВИЛЬНАЯ КОНФИГУРАЦИЯ
+
 from pathlib import Path
 from decouple import config
+import psycopg2
+from dotenv import load_dotenv
 import dj_database_url
 import os
 
@@ -7,14 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-CHANGE-THIS-IN-PRODUCTION-abc123xyz')
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
-# CSRF Trusted Origins для Railway
-CSRF_TRUSTED_ORIGINS = [
-    'https://web-production-e36b7.up.railway.app',
-    'https://*.railway.app',
-]
+
 
 # Application
 INSTALLED_APPS = [
@@ -58,18 +58,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'taskmanager.wsgi.application'
 
-# Database
-# Database
-DATABASE_URL = config('DATABASE_URL', default='postgresql://postgres:password@localhost:5432/railway')
+
+
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=DATABASE_URL,
-        conn_max_age=600,
-        ssl_require=True
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'taskmanager',
+        'USER': 'postgres',
+        'PASSWORD': '151976',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -97,11 +98,8 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
-# Security for production
-# Security for production
+# Security
 if not DEBUG:
-    # Railway уже обрабатывает SSL, не нужен редирект
-    # SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
@@ -110,3 +108,11 @@ if not DEBUG:
 
 SESSION_COOKIE_AGE = 3600
 SESSION_SAVE_EVERY_REQUEST = True
+
+# Медиафайлы
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Максимальный размер файла: 10 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024

@@ -23,28 +23,26 @@
                 {{ form.color }}
             </div>
         </div>
-        
+
         <div class="form-group">
             <label>Участники проекта</label>
             <p class="form-help">Выберите сотрудников, которые будут работать над проектом</p>
-            
+
             <!-- Скрываем стандартный select -->
             <div style="display: none;">
                 {{ form.members }}
             </div>
-            
+
             <!-- Красивый интерфейс выбора -->
             <div class="members-selector">
                 <div class="members-search">
                     <input type="text" id="memberSearch" class="form-input" placeholder="🔍 Поиск сотрудников...">
                 </div>
-                
+
                 <div class="members-grid" id="membersGrid">
                     {% for user in form.fields.members.queryset %}
                     <div class="member-card" data-user-id="{{ user.id }}" data-user-name="{{ user.first_name }} {{ user.last_name }} {{ user.profile.position }}">
-                        <div class="member-card-avatar" style="background: {{ user.profile.avatar_color }}">
-                            {{ user.profile.initials }}
-                        </div>
+                        <img src="{{ user.profile.avatar_url }}" class="member-card-avatar" alt="{{ user.profile.initials }}" onerror="this.src='{{ user.profile.avatar_svg }}'">
                         <div class="member-card-info">
                             <div class="member-card-name">{{ user.first_name }} {{ user.last_name }}</div>
                             <div class="member-card-position">{{ user.profile.position|default:"Сотрудник" }}</div>
@@ -62,13 +60,13 @@
                 </div>
             </div>
         </div>
-        
+
         {% if form.errors %}
         <div class="form-errors">
             {% for field in form %}{% for error in field.errors %}<p>{{ field.label }}: {{ error }}</p>{% endfor %}{% endfor %}
         </div>
         {% endif %}
-        
+
         <div class="form-actions">
             <button type="submit" class="btn-primary">Сохранить</button>
             <a href="{% url 'project_list' %}" class="btn-ghost">Отмена</a>
@@ -84,7 +82,7 @@
 document.getElementById('memberSearch').addEventListener('input', function(e) {
     const searchTerm = e.target.value.toLowerCase();
     const cards = document.querySelectorAll('.member-card');
-    
+
     cards.forEach(card => {
         const name = card.getAttribute('data-user-name').toLowerCase();
         if (name.includes(searchTerm)) {
@@ -105,7 +103,7 @@ document.querySelectorAll('.member-card input[type="checkbox"]').forEach(checkbo
             card.classList.remove('selected');
         }
     });
-    
+
     // Инициализация состояния при загрузке
     if (checkbox.checked) {
         checkbox.closest('.member-card').classList.add('selected');

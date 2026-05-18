@@ -7,10 +7,7 @@
         <h1 class="page-title">Проекты</h1>
         <p class="page-subtitle">Все ваши проекты</p>
     </div>
-    <div class="page-header-actions">
-      <a href="{% url 'project_create' %}" class="btn-primary">+ Новый проект</a>
-    </div>
-
+    <a href="{% url 'project_create' %}" class="btn-primary">+ Новый проект</a>
 </div>
 
 {% if projects %}
@@ -38,9 +35,11 @@
             </div>
             <div class="project-members">
                 {% for member in project.members.all %}
-                    <div class="member-avatar member-avatar-sm" style="background: {{ member.profile.avatar_color }}" title="{{ member.first_name }} {{ member.last_name }} - {{ member.profile.position }}">
-                        {{ member.profile.initials }}
-                    </div>
+                    <img src="{{ member.profile.avatar_url }}"
+                         class="member-avatar member-avatar-sm"
+                         title="{{ member.first_name }} {{ member.last_name }} - {{ member.profile.position }}"
+                         alt="{{ member.profile.initials }}"
+                         onerror="this.src='{{ member.profile.avatar_svg }}'">
                 {% empty %}
                     <span class="text-muted" style="font-size: 12px;">Нет участников</span>
                 {% endfor %}

@@ -1,17 +1,22 @@
 from django.urls import path
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
     # Auth
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('api/tasks/estimate/', views.estimate_task_complexity, name='estimate_task'),  # отключено
 
     # Dashboard
     path('dashboard/', views.dashboard, name='dashboard'),
     path('', views.dashboard, name='home'),
     path('calendar/', views.calendar_view, name='calendar'),
     path('kanban/', views.kanban_view, name='kanban'),
-    path('kanban/update-status/', views.kanban_update_status, name='kanban_update_status'),
+    path('kanban/update-status/', views.kanban_update_status, name='kanban_update_status'),  # отключено
 
     # Projects
     path('projects/', views.project_list, name='project_list'),

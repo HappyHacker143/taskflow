@@ -14,7 +14,7 @@
     <div class="form-card">
         <form method="post" id="taskForm">
             {% csrf_token %}
-
+            
             <!-- Стандартные поля формы -->
             {% for field in form %}
                 <div class="form-group">
@@ -33,7 +33,7 @@
                     {% endif %}
                 </div>
             {% endfor %}
-
+            
             <!-- Кнопка AI-оценки -->
             <div style="margin: 20px 0;">
                 <button type="button" id="estimateBtn" class="btn btn-primary" style="width: 100%;">
@@ -44,39 +44,39 @@
                     🤖 Получить AI-оценку сложности
                 </button>
             </div>
-
+            
             <!-- Блок с результатами AI-оценки -->
             <div id="aiEstimation" style="display: none; margin-top: 24px; padding: 20px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px;">
                 <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--clr-text);">
                     🤖 AI-оценка задачи
                 </h3>
-
+                
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px;">
                     <!-- Сложность -->
                     <div class="ai-metric-card">
                         <div class="ai-metric-label">Сложность</div>
                         <div class="ai-metric-value" id="aiComplexity">—</div>
                     </div>
-
+                    
                     <!-- Время -->
                     <div class="ai-metric-card">
                         <div class="ai-metric-label">Оценка времени</div>
                         <div class="ai-metric-value" id="aiHours">—</div>
                     </div>
-
+                    
                     <!-- Риск -->
                     <div class="ai-metric-card">
                         <div class="ai-metric-label">Уровень риска</div>
                         <div class="ai-metric-value" id="aiRisk">—</div>
                     </div>
-
+                    
                     <!-- Специалист -->
                     <div class="ai-metric-card">
                         <div class="ai-metric-label">Рекомендуется</div>
                         <div class="ai-metric-value" id="aiLevel">—</div>
                     </div>
                 </div>
-
+                
                 <!-- Обоснование -->
                 <div style="background: var(--clr-bg); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
                     <div style="font-size: 13px; font-weight: 600; color: var(--clr-text-muted); margin-bottom: 6px;">
@@ -86,7 +86,7 @@
                         —
                     </div>
                 </div>
-
+                
                 <!-- Разбивка на подзадачи -->
                 <div id="aiBreakdownBlock" style="display: none;">
                     <div style="font-size: 13px; font-weight: 600; color: var(--clr-text-muted); margin-bottom: 8px;">
@@ -97,7 +97,7 @@
                     </ul>
                 </div>
             </div>
-
+            
             <!-- Действия -->
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Создать задачу</button>
@@ -161,22 +161,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const estimateBtn = document.getElementById('estimateBtn');
     const aiEstimation = document.getElementById('aiEstimation');
     const form = document.getElementById('taskForm');
-
+    
     estimateBtn.addEventListener('click', async function() {
         // Получаем данные формы
         const title = document.getElementById('id_title').value;
         const description = document.getElementById('id_description').value;
         const tags = document.getElementById('id_tags') ? document.getElementById('id_tags').value : '';
-
+        
         if (!title) {
             alert('Введите название задачи');
             return;
         }
-
+        
         // Показываем loading
         estimateBtn.disabled = true;
         estimateBtn.innerHTML = '⏳ Анализирую...';
-
+        
         try {
             // Отправляем запрос на AI-оценку
             const response = await fetch('/api/tasks/estimate/', {
@@ -191,29 +191,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     tags: tags
                 })
             });
-
+            
             const data = await response.json();
-
+            
             if (data.success) {
                 const est = data.estimation;
-
+                
                 // Показываем блок с оценкой
                 aiEstimation.style.display = 'block';
-
+                
                 // Заполняем данные
                 const complexityEl = document.getElementById('aiComplexity');
                 complexityEl.textContent = getComplexityLabel(est.complexity);
                 complexityEl.className = `ai-metric-value complexity-${est.complexity}`;
-
+                
                 document.getElementById('aiHours').textContent = `${est.estimated_hours} ч`;
-
+                
                 const riskEl = document.getElementById('aiRisk');
                 riskEl.textContent = getRiskLabel(est.risk_level);
                 riskEl.className = `ai-metric-value risk-${est.risk_level}`;
-
+                
                 document.getElementById('aiLevel').textContent = getLevelLabel(est.suggested_assignee_level);
                 document.getElementById('aiReasoning').textContent = est.reasoning;
-
+                
                 // Показываем разбивку если есть
                 if (est.breakdown && est.breakdown.length > 0) {
                     const breakdownEl = document.getElementById('aiBreakdown');
@@ -227,14 +227,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     document.getElementById('aiBreakdownBlock').style.display = 'none';
                 }
-
+                
                 // Плавный скролл к результатам
                 aiEstimation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
+                
             } else {
                 alert('Ошибка получения оценки');
             }
-
+            
         } catch (error) {
             console.error('Ошибка:', error);
             alert('Ошибка соединения с сервером');
@@ -249,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
     });
-
+    
     function getComplexityLabel(complexity) {
         const labels = {
             'low': '🟢 Низкая',
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return labels[complexity] || complexity;
     }
-
+    
     function getRiskLabel(risk) {
         const labels = {
             'low': '✅ Низкий',
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return labels[risk] || risk;
     }
-
+    
     function getLevelLabel(level) {
         const labels = {
             'junior': '👨‍💻 Junior',

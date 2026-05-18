@@ -14,6 +14,7 @@ from .models import Project, Task, TaskComment, Department, UserProfile
 from .forms import ProjectForm, TaskForm, CommentForm, UserCreateForm, UserEditForm
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from .ai_task_estimator import TaskComplexityEstimator
 import json
 
 # ─── HELPERS ─────────────────────────────────────────────
@@ -23,6 +24,32 @@ def is_admin(user):
     return user.is_authenticated and (user.is_superuser or user.profile.role == 'admin')
 
 
+@login_required
+@require_POST
+def estimate_task_complexity(request):
+    """AJAX endpoint для оценки сложности задачи"""
+    try:
+        data = json.loads(request.body)
+        title = data.get('title', '')
+        description = data.get('description', '')
+        tags = data.get('tags', '')
+
+        if not title:
+            return JsonResponse({'error': 'Название задачи обязательно'}, status=400)
+
+        estimator = TaskComplexityEstimator()
+        result = estimator.estimate_task(title, description, tags)
+
+        if result['success']:
+            return JsonResponse({
+                'success': True,
+                'estimation': result['estimation']
+            })
+        else:
+            return JsonResponse({'error': 'Ошибка оценки'}, status=500)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 # ─── AUTH ────────────────────────────────────────────────
 
 def login_view(request):
@@ -313,12 +340,15 @@ def task_delete(request, pk):
 @require_POST
 def add_comment(request, task_pk):
     task = get_object_or_404(Task, pk=task_pk)
-    form = CommentForm(request.POST)
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.task = task
-        comment.author = request.user
+    text = request.POST.get('text', '').strip()
+    attachment = request.FILES.get('attachment')
+
+    if text or attachment:
+        comment = TaskComment(task=task, author=request.user, text=text)
+        if attachment:
+            comment.attachment = attachment
         comment.save()
+
     return redirect('task_detail', pk=task.pk)
 
 
@@ -361,12 +391,12 @@ def user_list(request):
     """Список всех пользователей (только для админов)"""
     users = User.objects.select_related('profile', 'profile__department').order_by('first_name', 'last_name')
     departments = Department.objects.all()
-    
+
     # Фильтр по отделу
     dept_filter = request.GET.get('department')
     if dept_filter:
         users = users.filter(profile__department_id=dept_filter)
-    
+
     # Поиск
     search = request.GET.get('search', '').strip()
     if search:
@@ -377,7 +407,7 @@ def user_list(request):
             Q(email__icontains=search) |
             Q(profile__position__icontains=search)
         )
-    
+
     context = {
         'users': users,
         'departments': departments,
@@ -408,14 +438,18 @@ def user_edit(request, pk):
     """Редактирование пользователя (только админ)"""
     user = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
-        form = UserEditForm(request.POST, instance=user)
+        # ВАЖНО: передаём request.FILES для загрузки аватара
+        form = UserEditForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
             messages.success(request, f'Данные пользователя "{user.get_full_name()}" обновлены.')
             return redirect('user_list')
     else:
         form = UserEditForm(instance=user)
-    return render(request, 'tasks/user_form.html', {'form': form, 'title': f'Редактировать: {user.get_full_name()}'})
+    return render(request, 'tasks/user_form.html', {
+        'form': form,
+        'title': f'Редактировать: {user.get_full_name()}'
+    })
 
 
 @login_required
@@ -426,7 +460,7 @@ def user_delete(request, pk):
     if request.user == user:
         messages.error(request, 'Вы не можете удалить свой собственный аккаунт.')
         return redirect('user_list')
-    
+
     if request.method == 'POST':
         user.is_active = False
         user.save()
@@ -569,22 +603,7 @@ def kanban_view(request):
 
     return render(request, 'tasks/kanban.html', context)
 
-def project_detail(request, pk):
-    project = get_object_or_404(Project, pk=pk)
 
-    # Группируем задачи по статусам
-    tasks_by_status = {
-        'todo': project.tasks.filter(status='todo').count(),
-        'in_progress': project.tasks.filter(status='in_progress').count(),
-        'review': project.tasks.filter(status='review').count(),
-        'done': project.tasks.filter(status='done').count(),
-    }
-
-    context = {
-        'project': project,
-        'tasks_by_status': tasks_by_status,
-    }
-    return render(request, 'tasks/project_detail.html', context)
 
 @login_required
 @require_POST
@@ -621,3 +640,4 @@ def kanban_update_status(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+

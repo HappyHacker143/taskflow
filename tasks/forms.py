@@ -16,7 +16,6 @@ class ProjectForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Показываем пользователей с полными именами
         self.fields['members'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
         self.fields['members'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name} ({obj.profile.position or 'Сотрудник'})"
 
@@ -40,13 +39,10 @@ class TaskForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user:
-            # Показываем только проекты, где пользователь участник или создатель
             from django.db.models import Q
             self.fields['project'].queryset = Project.objects.filter(
                 Q(created_by=user) | Q(members=user)
             ).distinct()
-            
-            # Показываем активных пользователей с полными именами
             self.fields['assignee'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
             self.fields['assignee'].label_from_instance = lambda obj: f"{obj.first_name} {obj.last_name} - {obj.profile.position or 'Сотрудник'}"
             self.fields['assignee'].required = False
@@ -64,11 +60,11 @@ class CommentForm(forms.ModelForm):
 class UserCreateForm(forms.ModelForm):
     """Форма создания пользователя администратором"""
     password1 = forms.CharField(
-        label='Пароль', 
+        label='Пароль',
         widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'Пароль'})
     )
     password2 = forms.CharField(
-        label='Повторите пароль', 
+        label='Повторите пароль',
         widget=forms.PasswordInput(attrs={'class': 'form-input', 'placeholder': 'Повторите пароль'})
     )
     department = forms.ModelChoiceField(
@@ -124,7 +120,6 @@ class UserCreateForm(forms.ModelForm):
         user.set_password(self.cleaned_data['password1'])
         if commit:
             user.save()
-            # Обновляем профиль
             profile = user.profile
             profile.department = self.cleaned_data.get('department')
             profile.position = self.cleaned_data.get('position')
@@ -159,6 +154,18 @@ class UserEditForm(forms.ModelForm):
         label='Телефон',
         widget=forms.TextInput(attrs={'class': 'form-input'})
     )
+    # НОВОЕ: загрузка аватара
+    avatar = forms.ImageField(
+        required=False,
+        label='Фото профиля',
+        widget=forms.FileInput(attrs={'class': 'form-input', 'accept': 'image/*', 'id': 'avatarInput'})
+    )
+    # НОВОЕ: флаг удаления аватара
+    clear_avatar = forms.BooleanField(
+        required=False,
+        label='Удалить фото',
+        widget=forms.HiddenInput()
+    )
 
     class Meta:
         model = User
@@ -186,5 +193,16 @@ class UserEditForm(forms.ModelForm):
             profile.position = self.cleaned_data.get('position')
             profile.role = self.cleaned_data.get('role')
             profile.phone = self.cleaned_data.get('phone')
+
+            # Удалить аватар
+            if self.cleaned_data.get('clear_avatar'):
+                if profile.avatar:
+                    profile.avatar.delete(save=False)
+                profile.avatar = None
+
+            # Сохранить новый аватар
+            elif self.cleaned_data.get('avatar'):
+                profile.avatar = self.cleaned_data['avatar']
+
             profile.save()
         return user
