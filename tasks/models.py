@@ -4,6 +4,8 @@ from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from .validators import validate_attachment_file
+
 
 class Department(models.Model):
     """Отдел компании"""
@@ -126,6 +128,7 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     color = models.CharField(max_length=7, default='#4F46E5')
+    is_archived = models.BooleanField(default=False, verbose_name='В архиве')
 
     class Meta:
         ordering = ['-created_at']
@@ -137,11 +140,15 @@ class Project(models.Model):
 
     @property
     def task_count(self):
-        return self.tasks.count()
+        if hasattr(self, 'annotated_task_count'):
+            return self.annotated_task_count
+        return self.tasks.filter(is_archived=False).count()
 
     @property
     def completed_task_count(self):
-        return self.tasks.filter(status='done').count()
+        if hasattr(self, 'annotated_completed_task_count'):
+            return self.annotated_completed_task_count
+        return self.tasks.filter(status='done', is_archived=False).count()
 
     @property
     def progress_percent(self):
@@ -199,6 +206,7 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     due_date = models.DateField(null=True, blank=True, verbose_name='Дата окончания')
     tags = models.CharField(max_length=500, blank=True, verbose_name='Теги (через запятую)')
+    is_archived = models.BooleanField(default=False, verbose_name='В архиве')
 
     class Meta:
         ordering = ['-created_at']
@@ -210,7 +218,7 @@ class Task(models.Model):
 
     @property
     def is_overdue(self):
-        if self.due_date and self.status != 'done':
+        if self.due_date and self.status != 'done' and not self.is_archived:
             return self.due_date < timezone.now().date()
         return False
 
@@ -233,6 +241,7 @@ class TaskComment(models.Model):
     text = models.TextField(verbose_name='Комментарий', blank=True)
     attachment = models.FileField(
         upload_to='comment_attachments/',
+        validators=[validate_attachment_file],
         blank=True,
         null=True,
         verbose_name='Вложение'
@@ -260,7 +269,7 @@ class TaskComment(models.Model):
 
     @property
     def is_image(self):
-        return self.attachment_ext in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
+        return self.attachment_ext in ['jpg', 'jpeg', 'png', 'webp']
 
     @property
     def is_pdf(self):
@@ -268,7 +277,39 @@ class TaskComment(models.Model):
 
     @property
     def is_document(self):
-        return self.attachment_ext in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv']
+        return self.attachment_ext in ['docx', 'txt']
 
     def __str__(self):
         return f'Комментарий к "{self.task.title}"'
+
+class TaskActivity(models.Model):
+    ACTION_STATUS_CHANGED = 'status_changed'
+    ACTION_ASSIGNEE_CHANGED = 'assignee_changed'
+    ACTION_COMMENT_ADDED = 'comment_added'
+    ACTION_TASK_CREATED = 'task_created'
+    ACTION_TASK_UPDATED = 'task_updated'
+    ACTION_TASK_ARCHIVED = 'task_archived'
+
+    ACTION_CHOICES = [
+        (ACTION_STATUS_CHANGED, 'Статус изменён'),
+        (ACTION_ASSIGNEE_CHANGED, 'Исполнитель изменён'),
+        (ACTION_COMMENT_ADDED, 'Комментарий добавлен'),
+        (ACTION_TASK_CREATED, 'Задача создана'),
+        (ACTION_TASK_UPDATED, 'Задача обновлена'),
+        (ACTION_TASK_ARCHIVED, 'Задача архивирована'),
+    ]
+
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='activities')
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='task_activities')
+    action = models.CharField(max_length=40, choices=ACTION_CHOICES)
+    description = models.CharField(max_length=500, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'История задачи'
+        verbose_name_plural = 'История задач'
+
+    def __str__(self):
+        return f'{self.get_action_display()} — {self.task.title}'

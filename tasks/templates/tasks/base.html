@@ -9,6 +9,24 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <div class="page-background" aria-hidden="true">
+        <div class="bg-gradient"></div>
+        <div class="bg-grid"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+        <div class="bg-particle"></div>
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Открыть меню" aria-controls="sidebar" aria-expanded="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+        </svg>
+    </button>
+    <div class="sidebar-overlay" id="sidebarOverlay" tabindex="-1" aria-hidden="true"></div>
     {% if messages %}
         <div class="toast-container" id="toastContainer">
             {% for message in messages %}
@@ -21,10 +39,15 @@
     {% endif %}
 
     <div class="layout">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <a href="{% url 'dashboard' %}" class="brand-link">
-                    <div class="brand-icon">TF</div>
+                    <div class="brand-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="5" width="20" height="18" rx="6" stroke="currentColor" stroke-width="2.2"/>
+                            <path class="check-path" d="M9 14.4L12.4 17.8L19.4 10.2" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
                     <span class="brand-text">TaskFlow</span>
                 </a>
             </div>

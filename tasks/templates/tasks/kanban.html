@@ -1,4 +1,5 @@
 {% extends 'tasks/base.html' %}
+{% load static %}
 
 {% block title %}Kanban — TaskFlow{% endblock %}
 
@@ -330,34 +331,73 @@ document.addEventListener('DOMContentLoaded', function() {
         column.addEventListener('dragleave', function() {
             this.classList.remove('drag-over');
         });
-        column.addEventListener('drop', function(e) {
+        column.addEventListener('drop', async function(e) {
             e.preventDefault();
             e.stopPropagation();
             this.classList.remove('drag-over');
             if (!draggedCard) return;
+
             const newStatus = this.closest('.kanban-column').dataset.status;
             const taskId = draggedCard.dataset.taskId;
-            updateTaskStatus(taskId, newStatus);
+            const previousColumn = draggedCard.parentElement;
+            const nextSibling = draggedCard.nextElementSibling;
+
             this.appendChild(draggedCard);
+            const ok = await updateTaskStatus(taskId, newStatus);
+            if (!ok) {
+                if (nextSibling && nextSibling.parentElement === previousColumn) {
+                    previousColumn.insertBefore(draggedCard, nextSibling);
+                } else {
+                    previousColumn.appendChild(draggedCard);
+                }
+                showKanbanToast('Не удалось обновить статус. Проверьте права доступа.', 'error');
+                return;
+            }
+            showKanbanToast('Статус задачи обновлён.', 'success');
         });
     });
 
-    function updateTaskStatus(taskId, newStatus) {
+    async function updateTaskStatus(taskId, newStatus) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        fetch(`/tasks/${taskId}/update-status/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': csrfToken
-            },
-            body: `status=${newStatus}`
-        })
-        .then(r => r.json())
-        .then(data => { if (!data.success) location.reload(); })
-        .catch(() => location.reload());
+        try {
+            const response = await fetch(`/tasks/${taskId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: new URLSearchParams({ status: newStatus })
+            });
+            if (!response.ok) return false;
+            const data = await response.json();
+            return Boolean(data.success);
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function showKanbanToast(message, type) {
+        const container = document.getElementById('toastContainer') || createToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type === 'error' ? 'error' : 'success'}`;
+        toast.innerHTML = `<span class="toast-icon">${type === 'error' ? '✕' : '✓'}</span><span>${message}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.className = 'toast-container';
+        container.id = 'toastContainer';
+        document.body.appendChild(container);
+        return container;
     }
 });
 </script>
+<script src="{% static 'js/live_updates.js' %}"></script>
 
 {% csrf_token %}
 {% endblock %}

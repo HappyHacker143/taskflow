@@ -495,7 +495,7 @@
                             </svg>
                             Прикрепить файл
                             <input type="file" name="attachment" id="fileInput"
-                                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                                   accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.docx"
                                    onchange="onFileChange(this)">
                         </label>
 
@@ -580,10 +580,30 @@
             </div>
         </div>
 
+        {% if activities %}
+        <div class="task-detail-meta-card" style="margin-top:20px;">
+            <h4>История изменений</h4>
+            {% for activity in activities %}
+            <div class="meta-item" style="align-items:flex-start; gap:12px;">
+                <span class="meta-label">{{ activity.created_at|date:"d.m H:i" }}</span>
+                <span class="meta-value" style="text-align:left; flex:1;">
+                    <strong>{{ activity.get_action_display }}</strong><br>
+                    <span class="text-muted">
+                        {% if activity.actor %}{{ activity.actor.profile.display_name }}{% else %}Система{% endif %}
+                        {% if activity.description %} — {{ activity.description }}{% endif %}
+                    </span>
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if can_edit_current_task %}
         <div class="task-detail-actions">
             <a href="{% url 'task_edit' task.pk %}" class="btn-primary btn-full-card">✎ Редактировать</a>
-            <a href="{% url 'task_delete' task.pk %}" class="btn-danger btn-full-card">✕ Удалить</a>
+            <a href="{% url 'task_delete' task.pk %}" class="btn-danger btn-full-card">↧ Архивировать</a>
         </div>
+        {% endif %}
     </aside>
 </div>
 
